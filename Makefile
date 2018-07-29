@@ -8,7 +8,7 @@ BINDIR = /usr/sbin/
 CC=gcc
 CFLAGS = -Wall -Wshadow -Wundef -Wmaybe-uninitialized
 CFLAGS += -O3 -g3 -I./
-LDFLAGS += -lm
+LDFLAGS += -lstdc++ -lm
 
 VPATH = 
 

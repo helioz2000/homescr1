@@ -22,12 +22,18 @@
 
 #include "hardware.h"
 #include "screen.h"
+#include "datatag.h"
+
+#define VAR_PROCESS_INTERVAL 5      // seconds
+
+#define CPU_TEMP_TOPIC "binder/home/screen1/cpu/temp"
 
 bool exitSignal = false;
-
+time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
 extern char *info_label_text;
 
 Hardware hw;
+TagStore ts;
 
 void sigHandler(int signum)
 {
@@ -73,6 +79,18 @@ void cmd_process(void)
     screen_clearCmd();
 }
 
+void var_process(void) {
+    time_t now = time(NULL);
+    if (now > var_process_time) {
+        var_process_time = now + VAR_PROCESS_INTERVAL;
+        // update CPU temperature
+        Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
+        if (tag != NULL) {
+            tag->setValue(hw.read_cpu_temp());
+        }
+    }
+}
+
 void init_values(void)
 {
     char info1[80], info2[80], info3[80], info4[80];
@@ -93,6 +111,23 @@ void init_values(void)
     info_label_text = (char *)malloc(strlen(info1) +strlen(info2) +strlen(info3) +strlen(info4) +5);
     sprintf(info_label_text, "%s\n%s\n%s\n%s", info1, info2, info3, info4);
     //printf(info_label_text);
+}
+
+void cb_test(int x, Tag* t)
+{
+    printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+}
+
+
+void init_tags(void)
+{
+    Tag* tp = ts.addTag((char*) CPU_TEMP_TOPIC);
+    ts.addTag((char*) "binder/home/screen1/room/temp");
+    ts.addTag((char*) "binder/home/screen1/room/hum");
+    // = ts.getTag((char*) "binder/home/screen1/room/temp");
+    
+    tp->registerCallback(&cb_test, 15);
+
 }
 
 void exit_loop(void)
@@ -120,6 +155,7 @@ void main_loop()
         lv_tick_inc(SCREEN_UPDATE);
         lv_task_handler();
         cmd_process();
+        var_process();
         hw.process_screen_saver(screen_current_brightness());
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
@@ -134,6 +170,7 @@ void main_loop()
     printf("CPU time %.3fms - %.3fms\n", min_time*1000, max_time*1000);
 }
 
+
 int main (int argc, char *argv[])
 {
     signal (SIGINT, sigHandler);
@@ -141,6 +178,7 @@ int main (int argc, char *argv[])
     signal (SIGTERM, sigHandler);
     
     init_values();
+    init_tags();
     screen_init();
     screen_create();
     main_loop();

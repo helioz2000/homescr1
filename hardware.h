@@ -1,6 +1,10 @@
 /**
  * @file hardware.h
  *
+ -----------------------------------------------------------------------------
+ This class provides access to various hardware and OS related information.
+ It also handles the screen saver and system shutdown functions.
+ -----------------------------------------------------------------------------
  */
 
 #ifndef HARDWARE_H

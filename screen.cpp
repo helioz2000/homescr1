@@ -1,5 +1,5 @@
 /**
- * @file screen.c
+ * @file screen.cpp
  *
  */
 
@@ -15,13 +15,14 @@
 #include "lv_drivers/indev/evdev.h"
 
 #include "screen.h"
+#include "datatag.h"
 
 /**********************
  *   PRIVATE VARIABLES
  **********************/
 char *info_label_text;
-int16_t brightness_current_value;
-scr_cmd_t scr_cmd;
+int16_t brightness_value = 10;
+scr_cmd_t scr_cmd = SCR_CMD_NONE;
 
 lv_indev_drv_t indev_drv;
 lv_res_t slider_action(lv_obj_t *slider);
@@ -34,6 +35,7 @@ lv_obj_t *tab2;
 lv_obj_t *tab3;
 lv_obj_t *tab4;
 lv_obj_t *chart;
+lv_obj_t *lv_cpuTemp;
 
 /**********************
  *   PRIVATE PROTOTYPES
@@ -48,9 +50,6 @@ void settings_create(lv_obj_t *parent);
  **********************/
 void screen_init()
 {
-    brightness_current_value = 10;
-    scr_cmd = SCR_CMD_NONE;
-    
     lv_init();
     
     evdev_init();               // initialise event device
@@ -133,12 +132,12 @@ void screen_clearCmd(void) {
     scr_cmd = SCR_CMD_NONE;
 }
 
-int16_t screen_current_brightness(void) {
-    return brightness_current_value;
+int16_t screen_brightness(void) {
+    return brightness_value;
 }
 
-void screen_set_current_brightness(int16_t value) {
-    brightness_current_value = value;
+void screen_set_brightness(int16_t value) {
+    brightness_value = value;
 }
 
 // exit screen
@@ -165,6 +164,15 @@ void heating_create(lv_obj_t *parent)
 {
 }
 
+void cpuTempUpdate(int x, Tag* t)
+{
+    char buffer[20];
+    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+    snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
+    lv_label_set_text(lv_cpuTemp, buffer);
+}
+
+
 void settings_create(lv_obj_t *parent)
 {
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
@@ -181,7 +189,7 @@ void settings_create(lv_obj_t *parent)
     lv_obj_align(slider, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -40, -20);
     lv_slider_set_action(slider, brightness_action);
     lv_slider_set_range(slider, 10, 200);
-    lv_slider_set_value(slider, brightness_current_value);
+    lv_slider_set_value(slider, brightness_value);
     // Create a label top of brightness slider
     lv_obj_t * bightness_slider_label = lv_label_create(parent, NULL);
     lv_label_set_text(bightness_slider_label, "Brightness");
@@ -189,14 +197,23 @@ void settings_create(lv_obj_t *parent)
     
     // Reboot & Shutdown Button List
     lv_obj_t *list1 = lv_list_create(parent, NULL);
-    lv_obj_set_size(list1, 130, 170);
+    lv_obj_set_size(list1, 150, 170);
     lv_obj_align(list1, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -120, 00);
     
     // Add list elements
-    lv_obj_t *btn = lv_list_add(list1, NULL, "Reboot", pi_btn_action);
+    lv_obj_t *btn = lv_list_add(list1, NULL, SYMBOL_LOOP " Reboot", pi_btn_action);
     lv_obj_set_free_num(btn, SCR_CMD_REBOOT);
-    btn = lv_list_add(list1, NULL, "Stop", pi_btn_action);
+    btn = lv_list_add(list1, NULL, SYMBOL_POWER " Stop", pi_btn_action);
     lv_obj_set_free_num(btn, SCR_CMD_SHUTDOWN);
+    
+    // CPU Temperature
+    lv_obj_t *obj1 = lv_obj_create(parent, NULL);
+    lv_obj_set_size(obj1, 150, 40);
+    lv_obj_set_style(obj1, &lv_style_plain_color);
+    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+    lv_cpuTemp = lv_label_create(obj1, NULL);
+    lv_label_set_text(lv_cpuTemp, "CPU --.-°C");
+    lv_obj_align(lv_cpuTemp, NULL, LV_ALIGN_CENTER, 0, 0);
     
     // Info Label
     lv_obj_t *info_label = lv_label_create(parent, NULL);
@@ -330,14 +347,14 @@ lv_res_t slider_action(lv_obj_t *slider)
 lv_res_t brightness_action(lv_obj_t *slider)
 {
     int16_t v = lv_slider_get_value(slider);
-    brightness_current_value = v;
+    brightness_value = v;
     scr_cmd = SCR_CMD_BRIGHTNESS;
     return LV_RES_OK;
 }
 
 lv_res_t pi_btn_action(lv_obj_t * btn)
 {
-    scr_cmd = lv_obj_get_free_num(btn); // button number = screen command
+    scr_cmd = (scr_cmd_t)lv_obj_get_free_num(btn); // button number = screen command
     return LV_RES_OK; // Return OK if the button is not deleted
 }
 

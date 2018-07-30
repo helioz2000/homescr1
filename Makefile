@@ -57,7 +57,8 @@ default: $(COBJS)
 	$(CC) -o $(BIN) $(COBJS) $(LDFLAGS)	
 
 clean:
-	rm -f $(COBJS)
+# needs soem attention - deletes all CPP files!
+#	rm -f $(COBJS)
 
 install:
 	install -o root $(BIN) $(BINDIR)$(BIN)

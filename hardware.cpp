@@ -1,5 +1,5 @@
 /**
- * @file hardware.c
+ * @file hardware.cpp
  *
  */
 
@@ -16,8 +16,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
-#include "hardware.h"
 
+#include "hardware.h"
+#include "datatag.h"
 
 /*********************
  *      DEFINES

@@ -39,8 +39,8 @@ extern "C" {
     void screen_exit(void);
     scr_cmd_t screen_getCmd(void);
     void screen_clearCmd();
-    int16_t screen_current_brightness(void);
-    void screen_set_current_brightness(int16_t value);
+    int16_t screen_brightness(void);
+    void screen_set_brightness(int16_t value);
     
 #ifdef __cplusplus
 }

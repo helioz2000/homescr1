@@ -1,5 +1,5 @@
 /**
- * @file hardware.c
+ * @file homescr1.cpp
  *
  */
 
@@ -30,7 +30,9 @@
 
 bool exitSignal = false;
 time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
+
 extern char *info_label_text;
+extern void cpuTempUpdate(int x, Tag* t);
 
 Hardware hw;
 TagStore ts;
@@ -71,7 +73,7 @@ void cmd_process(void)
             exitSignal = true;
             break;
         case SCR_CMD_BRIGHTNESS:
-            hw.set_brightness(screen_current_brightness());
+            hw.set_brightness(screen_brightness());
             break;
         default:
             break;
@@ -101,7 +103,7 @@ void init_values(void)
         value = 10; // ensure min value
         hw.set_brightness(value);
     }
-    screen_set_current_brightness(value);   // write to screen brightness
+    screen_set_brightness(value);   // write to screen brightness
     
     // get hardware info
     hw.get_model_name(info1, sizeof(info1));
@@ -112,12 +114,12 @@ void init_values(void)
     sprintf(info_label_text, "%s\n%s\n%s\n%s", info1, info2, info3, info4);
     //printf(info_label_text);
 }
-
+/*
 void cb_test(int x, Tag* t)
 {
     printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
 }
-
+*/
 
 void init_tags(void)
 {
@@ -125,14 +127,12 @@ void init_tags(void)
     ts.addTag((char*) "binder/home/screen1/room/temp");
     ts.addTag((char*) "binder/home/screen1/room/hum");
     // = ts.getTag((char*) "binder/home/screen1/room/temp");
-    
-    tp->registerCallback(&cb_test, 15);
-
+    tp->registerCallback(&cpuTempUpdate, 15);
 }
 
 void exit_loop(void)
 {
-    hw.set_brightness(screen_current_brightness());
+    hw.set_brightness(screen_brightness());
     screen_exit();
     for (int i=0; i<=10; i++) {
         lv_tick_inc(SCREEN_UPDATE);
@@ -156,7 +156,7 @@ void main_loop()
         lv_task_handler();
         cmd_process();
         var_process();
-        hw.process_screen_saver(screen_current_brightness());
+        hw.process_screen_saver(screen_brightness());
         end = clock();
         cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
         if (cpu_time_used > max_time) {

@@ -1,3 +1,20 @@
+/**
+ * @file datatag.h
+ 
+-----------------------------------------------------------------------------
+ Two classes provide encapsulation for typical use of a data tag in an
+ automation oriented user interface.
+ This implementation is targeted data which is based on the MQTT protocol
+ and stores the data access information as a topic path (see MQTT details)
+ 
+ Class "Tag" encapsulates a single data unit
+ Class "TagList" provides a facility to manage a list of tags
+ 
+ The Tag class provides for a callback interface which is intended to update
+ a user interface element (e.g. display value) only when data changes
+-----------------------------------------------------------------------------
+*/
+
 #ifndef _DATATAG_H_
 #define _DATATAG_H_
 
@@ -6,11 +23,8 @@
 #include <iostream>
 #include <string>
 
-#define MAX_TAG_NUM 50
+#define MAX_TAG_NUM 100         // The mximum number of tags which can be stored in TagList
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
 
 class Tag {
 public:
@@ -86,14 +100,15 @@ public:
      */
     int intValue(void);
 
-    
+
 private:
-    
-    std::string topic;
-    uint16_t topicCRC;
-    double topicDoubleValue;
-    time_t lastUpdateTime;
-    void (*valueUpdate) (int,Tag*);      // callback for value update
+    // All properties of this class are private
+    // Use setters & getters to access these values
+    std::string topic;                  // storage for topic path
+    uint16_t topicCRC;                  // CRC on topic path
+    double topicDoubleValue;            // storage numeric value
+    time_t lastUpdateTime;              // last update time (change of value)
+    void (*valueUpdate) (int,Tag*);     // callback for value update
     int valueUpdateID;
     
 };
@@ -123,7 +138,7 @@ public:
     Tag* getTag(const char* tagTopic);
     
 private:
-    Tag *tagList[MAX_TAG_NUM];
+    Tag *tagList[MAX_TAG_NUM];          // An array references to Tags
     
 };
 

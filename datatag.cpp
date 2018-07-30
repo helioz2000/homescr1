@@ -228,5 +228,3 @@ Tag* TagStore::addTag(const char* tagTopic) {
     //printf("%s - [%d] - %s\n", __func__, index, tPtr->getTopic());
     return tPtr;
 }
-
-

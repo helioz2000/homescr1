@@ -6,6 +6,7 @@ BINDIR = /usr/sbin/
 #MAINSRC = homescr1.cpp
 
 CC=gcc
+CXX=g++
 CFLAGS = -Wall -Wshadow -Wundef -Wmaybe-uninitialized
 CFLAGS += -O3 -g3 -I./
 LDFLAGS += -lstdc++ -lm
@@ -31,16 +32,15 @@ include ./lv_drivers/indev/indev.mk
 # folder for our object files
 OBJDIR = ../obj
 
-COBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(CSRCS))
-
-#MAINOBJ = $(MAINSRC:.c=.o)
-
-CSRCS += $(wildcard *.cpp)
 CSRCS += $(wildcard *.c)
+CPPSRCS = $(wildcard *.cpp)
+
+COBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(CSRCS))
+CPPOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPPSRCS))
 
 #SRCS = $(CSRCS) $(MAINSRC)
-SRCS = $(CSRCS)
-OBJS = $(COBJS)
+SRCS = $(CSRCS) $(CPPSRCS)
+OBJS = $(COBJS) $(CPPOBJS)
 
 #.PHONY: clean
 
@@ -50,15 +50,24 @@ $(OBJDIR)/%.o: %.c
 	@$(CC)  $(CFLAGS) -c $< -o $@
 	@echo "CC $<"
 	
+$(OBJDIR)/%.o: %.cpp
+	@$(CXX)  $(CFLAGS) -c $< -o $@
+	@echo "CXX $<"
+
 #default: $(COBJS) $(MAINOBJ)
 #	$(CC) -o $(BIN) $(MAINOBJ) $(COBJS) $(LDFLAGS)
 	
-default: $(COBJS)
-	$(CC) -o $(BIN) $(COBJS) $(LDFLAGS)	
+default: $(OBJS)
+	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS)	
+
+#	nothing to do but will print info
+nothing:
+#	$(info OBJS ="$(OBJS)")
+	$(info DONE)	
+
 
 clean:
-# needs soem attention - deletes all CPP files!
-#	rm -f $(COBJS)
+	rm -f $(OBJS)
 
 install:
 	install -o root $(BIN) $(BINDIR)$(BIN)

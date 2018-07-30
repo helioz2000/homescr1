@@ -30,9 +30,9 @@
 #define TOUCH_INPUT_PATH "/dev/input/event0"
 #define SCREEN_SAVER_TIME 8      // in s
 
-static int touch_fd = -1;
-static time_t screen_timout;
-static bool screen_saver_active = false;
+int touch_fd = -1;
+time_t screen_timout;
+bool screen_saver_active = false;
 
 Hardware::Hardware()
 {
@@ -98,7 +98,7 @@ int Hardware::get_ip_address(char *buffer, int maxlen)
         pclose(pf);
         length = strlen(data);
         data[length-1] = 0;
-        if (strlen(data) <= maxlen) {
+        if (strlen(data) <= (unsigned)maxlen) {
             strcpy(buffer, data);
         } else {
             strncpy(buffer, data, maxlen);
@@ -151,7 +151,7 @@ int Hardware::get_kernel_name(char *buffer, int maxlen)
     if (retval == 0) {
         sprintf(buf,"%s Kernel %s", kernel.sysname, kernel.release);
     }
-    if (strlen(buf) <= maxlen) {
+    if (strlen(buf) <= (unsigned)maxlen) {
         strcpy(buffer, buf);
     } else {
         strncpy(buffer, buf, maxlen);

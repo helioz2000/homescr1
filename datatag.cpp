@@ -32,10 +32,6 @@ using namespace std;
  * GLOBAL FUNCTIONS
  *********************/
 
-static void test(void) {
-    printf("%s\n", __func__);
-}
-
 /**
  * Generate CRC16 for data
  * @param data: sequence of bytes
@@ -102,7 +98,7 @@ static uint16_t gen_crc16(const char *data, uint16_t size)
 //
 
 Tag::Tag() {
-    printf("%d\n", __func__);
+    printf("%s\n", __func__);
     throw runtime_error("Class Tag - forbidden constructor");
 }
 

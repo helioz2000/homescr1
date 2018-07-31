@@ -18,6 +18,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include <mosquitto.h>
+
 #include "lvgl/lvgl.h"
 
 #include "hardware.h"
@@ -50,11 +52,11 @@ void sigHandler(int signum)
         case SIGINT:
             strcpy(signame, "SIGINT");
             break;
-            
+
         default:
             break;
     }
-    
+
     printf("Received %s\n", signame);
     exitSignal = true;
 }
@@ -96,7 +98,7 @@ void var_process(void) {
 void init_values(void)
 {
     char info1[80], info2[80], info3[80], info4[80];
-    char buffer[240];
+    //char buffer[240];
     // Initialise brightness
     int value = hw.get_brightness();
     if (value < 10) {
@@ -104,7 +106,7 @@ void init_values(void)
         hw.set_brightness(value);
     }
     screen_set_brightness(value);   // write to screen brightness
-    
+
     // get hardware info
     hw.get_model_name(info1, sizeof(info1));
     hw.get_os_name(info2, sizeof(info2));
@@ -146,7 +148,7 @@ void main_loop()
     clock_t start, end;
     double cpu_time_used;
     double min_time = 99999.0, max_time = 0.0;
-    
+
     // first call takes a long time (10ms)
     lv_tick_inc(SCREEN_UPDATE);
     lv_task_handler();
@@ -176,11 +178,15 @@ int main (int argc, char *argv[])
     signal (SIGINT, sigHandler);
     signal (SIGHUP, sigHandler);
     signal (SIGTERM, sigHandler);
-    
+
+    // test
+    mosquitto_lib_init();
+
     init_values();
     init_tags();
     screen_init();
     screen_create();
     main_loop();
+    mosquitto_lib_cleanup();
     exit_loop();
 }

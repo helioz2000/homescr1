@@ -3,17 +3,23 @@
 #
 BIN = homescr1
 BINDIR = /usr/sbin/
-#MAINSRC = homescr1.cpp
+DESTDIR = /usr
+PREFIX = /local
 
 CC=gcc
 CXX=g++
 CFLAGS = -Wall -Wshadow -Wundef -Wmaybe-uninitialized
 CFLAGS += -O3 -g3 -I./
-LDFLAGS += -lstdc++ -lm
 
-VPATH = 
+# directory for local libs
+LDFLAGS = -L$(DESTDIR)$(PREFIX)/lib
+LIBS += -lstdc++ -lm -lmosquitto
 
-LVGL_DIR =  ${shell pwd}
+VPATH =
+
+$(info LDFLAGS ="$(LDFLAGS)")
+
+#LVGL_DIR =  ${shell pwd}
 #INC=-I$(LVGL_DIR)
 
 #LIBRARIES
@@ -38,7 +44,6 @@ CPPSRCS = $(wildcard *.cpp)
 COBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(CSRCS))
 CPPOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPPSRCS))
 
-#SRCS = $(CSRCS) $(MAINSRC)
 SRCS = $(CSRCS) $(CPPSRCS)
 OBJS = $(COBJS) $(CPPOBJS)
 
@@ -49,21 +54,18 @@ all: default
 $(OBJDIR)/%.o: %.c
 	@$(CC)  $(CFLAGS) -c $< -o $@
 	@echo "CC $<"
-	
+
 $(OBJDIR)/%.o: %.cpp
 	@$(CXX)  $(CFLAGS) -c $< -o $@
 	@echo "CXX $<"
 
-#default: $(COBJS) $(MAINOBJ)
-#	$(CC) -o $(BIN) $(MAINOBJ) $(COBJS) $(LDFLAGS)
-	
 default: $(OBJS)
-	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS)	
+	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS) $(LIBS)
 
 #	nothing to do but will print info
 nothing:
 #	$(info OBJS ="$(OBJS)")
-	$(info DONE)	
+	$(info DONE)
 
 
 clean:

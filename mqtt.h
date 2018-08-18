@@ -29,6 +29,16 @@ public:
     void connect(void);
 
     /**
+     * register callback for connection status change
+     */
+    void registerConnectionCallback(void (*callback) (bool));
+
+    /**
+     * register callback for topic update
+     */
+    void registerTopicUpdateCallback(void (*callback) (const char*, const char*));
+
+    /**
      * callback function for async connect
      * @param mosq: pointer to mosquitto structure
      * @param result: connection result
@@ -54,7 +64,7 @@ public:
      * @param mosq: pointer to mosquitto structure
      * @param message: the received mosquite message
      */
-     void message_callback(struct mosquitto *m, const struct mosquitto_message *message);
+    void message_callback(struct mosquitto *m, const struct mosquitto_message *message);
 
      /**
       * callback function for logging
@@ -62,7 +72,16 @@ public:
       * @param level: log level
       * @param str: log message
       */
-      void log_callback(struct mosquitto *m, int level, const char *str);
+    void log_callback(struct mosquitto *m, int level, const char *str);
+
+    /**
+     * callback function for subscribe
+     * @param mosq: pointer to mosquitto structure
+     * @param mid: message ID
+     * @param qos_count: the number of granted subscriptions (size of granted_qos)
+     * @param granted_qos: array of integers indicating the granted QoS for each of the subscriptions
+     */
+    void subscribe_callback(struct mosquitto *m, int mid, int qos_count, const int *granted_qos);
 
     /**
      * publish topic
@@ -74,18 +93,23 @@ public:
     int publish(const char* topic, const char* format, float value);
 
     /**
-     * Read operating system name
-     * @param buffer: text storage buffer
-     * @param maxlen: length of text storage buffer
+     * subscribe to a topic
+     * @param topic: topic string
      */
-    //int get_os_name(char *buffer, int maxlen);
+    int subscribe(const char *topic);
 
     /**
-     * Read hardware model name
-     * @param buffer: text storage buffer
-     * @param maxlen: length of text storage buffer
+     * unsubscribe from a topic
+     * @param topic: topic string
      */
-    //int get_model_name(char *buffer, int maxlen);
+    int unsubscribe(const char *topic);
+
+    /**
+     * check connection status
+     * @param buffer: text storage buffer
+     * @returns: true if connection is established
+     */
+    bool isConnected(void);
 
     /**
      * Read Kernel name and version
@@ -102,12 +126,14 @@ public:
     //int get_ip_address(char *buffer, int maxlen);
 
 private:
+    void (*connectionStatusCallback) (bool);     // callback for connection status change
+    void (*topicUpdateCallback) (const char *topic, const char *value);     // callback for topic update
 
     struct mosquitto *mosq;
     bool connected;
     char pub_buf[100];
 
-    bool console_log_enable;
+    bool console_log_enable;    // for mosqitto logging
 
     int qos;        // quality of service [0..2]
     bool retain;    // reained message (last known value)

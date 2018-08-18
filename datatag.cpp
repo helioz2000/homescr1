@@ -41,19 +41,19 @@ static uint16_t gen_crc16(const char *data, uint16_t size)
 {
     uint16_t out = 0;
     int bits_read = 0, bit_flag;
-    
+
     /* Sanity check: */
     if(data == NULL)
         return 0;
-    
+
     while(size > 0)
     {
         bit_flag = out >> 15;
-        
+
         /* Get next bit: */
         out <<= 1;
         out |= (*data >> bits_read) & 1; // item a) work from the least significant bits
-        
+
         /* Increment bit counter: */
         bits_read++;
         if(bits_read > 7)
@@ -62,13 +62,13 @@ static uint16_t gen_crc16(const char *data, uint16_t size)
             data++;
             size--;
         }
-        
+
         /* Cycle check: */
         if(bit_flag)
             out ^= CRC16;
-        
+
     }
-    
+
     // item b) "push out" the last 16 bits
     int i;
     for (i = 0; i < 16; ++i) {
@@ -77,7 +77,7 @@ static uint16_t gen_crc16(const char *data, uint16_t size)
         if(bit_flag)
             out ^= CRC16;
     }
-    
+
     // item c) reverse the bits
     uint16_t crc = 0;
     i = 0x8000;
@@ -85,7 +85,7 @@ static uint16_t gen_crc16(const char *data, uint16_t size)
     for (; i != 0; i >>=1, j <<= 1) {
         if (i & out) crc |= j;
     }
-    
+
     return crc;
 }
 
@@ -103,13 +103,14 @@ Tag::Tag() {
 }
 
 Tag::Tag(const char *topicStr) {
-    
+
     if (topicStr == NULL) {
         throw invalid_argument("Class Tag - topic is NULL");
     }
     this->topic = topicStr;
     valueUpdate = NULL;
     valueUpdateID = -1;
+    publish = false;        // subscribe tag
     //cout << topic << endl;
     topicCRC = gen_crc16(topic.data(), topic.length());
     //cout << topicCRC << endl;
@@ -169,6 +170,22 @@ int Tag::intValue(void) {
     return (int) topicDoubleValue;
 }
 
+bool Tag::isPublish() {
+    return publish;
+}
+
+bool Tag::isSubscribe() {
+    return !publish;
+}
+
+void Tag::setPublish(void) {
+    publish = true;
+}
+
+void Tag::setSubscribe(void) {
+    publish = false;
+}
+
 //
 // Class TagStore
 //
@@ -178,6 +195,7 @@ TagStore::TagStore() {
     for (int i = 0; i < MAX_TAG_NUM; i++) {
         tagList[i] = NULL;
     }
+    iterateIndex = -1;
 }
 
 TagStore::~TagStore() {
@@ -193,11 +211,11 @@ void TagStore::deleteAll(void) {
 }
 
 Tag *TagStore::getTag(const char* tagTopic) {
-    
+
     string topic (tagTopic);
     uint16_t tagCrc = gen_crc16(topic.data(), topic.length());
     Tag *retTag =  NULL;
-    
+
     for (int index = 0; index < MAX_TAG_NUM; index++) {
         if (tagCrc == tagList[index]->getTopicCrc()) {
             retTag = tagList[index];
@@ -205,6 +223,34 @@ Tag *TagStore::getTag(const char* tagTopic) {
         }
     }
     return retTag;
+}
+
+Tag* TagStore::getFirstTag(void) {
+    int index;
+    // find first free entry in tag list
+    for (index = 0; index < MAX_TAG_NUM; index++) {
+        if (tagList[index] != NULL) {
+            iterateIndex = index;
+            return tagList[index];
+        }
+    }
+    return NULL;    // no tags found
+}
+
+Tag* TagStore::getNextTag(void) {
+    int index;
+    // check if getFirstTag has been called
+    if (iterateIndex < 0) return NULL;
+    // find first free entry in tag list
+    for (index = iterateIndex+1; index < MAX_TAG_NUM; index++) {
+        if (tagList[index] != NULL) {
+            iterateIndex = index;
+            return tagList[index];
+        }
+    }
+    // No more tags found
+    iterateIndex = -1; // reset iterateIndex
+    return NULL;
 }
 
 Tag* TagStore::addTag(const char* tagTopic) {

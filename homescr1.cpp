@@ -38,6 +38,8 @@ time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
 extern char *info_label_text;
 extern void cpuTempUpdate(int x, Tag* t);
 
+void subscribe_tags(void);
+
 Hardware hw;
 TagStore ts;
 MQTT mqtt;
@@ -97,6 +99,7 @@ void var_process(void) {
             mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
         }
     }
+
 }
 
 void init_values(void)
@@ -120,20 +123,52 @@ void init_values(void)
     sprintf(info_label_text, "%s\n%s\n%s\n%s", info1, info2, info3, info4);
     //printf(info_label_text);
 }
-/*
-void cb_test(int x, Tag* t)
-{
-    printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-}
-*/
 
 void init_tags(void)
 {
     Tag* tp = ts.addTag((char*) CPU_TEMP_TOPIC);
+    tp->setPublish();
     ts.addTag((char*) "binder/home/screen1/room/temp");
     ts.addTag((char*) "binder/home/screen1/room/hum");
     // = ts.getTag((char*) "binder/home/screen1/room/temp");
     tp->registerCallback(&cpuTempUpdate, 15);
+}
+
+void init_mqtt(void) {
+    mqtt.registerConnectionCallback(mqtt_connection_status);
+    mqtt.registerTopicUpdateCallback(mqtt_topic_update);
+    mqtt.connect();
+}
+
+void subscribe_tags(void) {
+    // iterate over tag store and process every "subscribe" tag
+    Tag* tp = ts.getFirstTag();
+    while (tp != NULL) {
+        if (tp->isSubscribe()) {
+            //printf("%s: %s\n", __func__, tp->getTopic());
+            mqtt.subscribe(tp->getTopic());
+        }
+        tp = ts.getNextTag();
+    }
+}
+
+// called from mqtt when broker connection status changes
+void mqtt_connection_status(bool status) {
+    //printf("%s - %d\n", __func__, status);
+    // subscribe tags when connection is online
+    if (status) {
+        subscribe_tags();
+    }
+}
+
+// called from mqtt when a subscribed topic has received an update
+// Note: do not store the pointers "topic" & "value", they will be
+// destroyed after this function returns
+void mqtt_topic_update(const char *topic, const char *value) {
+    printf("%s - %s %s\n", __func__, topic, value);
+
+    -- Update tag with new value --
+
 }
 
 void exit_loop(void)
@@ -183,8 +218,10 @@ int main (int argc, char *argv[])
     signal (SIGHUP, sigHandler);
     signal (SIGTERM, sigHandler);
 
-    mqtt.connect();
+
+    init_mqtt();
     init_values();
+    usleep(100000);
     init_tags();
     screen_init();
     screen_create();

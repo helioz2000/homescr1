@@ -69,6 +69,11 @@ static void on_log(struct mosquitto *mosq, void *obj, int level, const char *str
 	((MQTT*)obj)->log_callback(mosq, level, str);
 }
 
+// Callback function for mosquitto subscribe
+static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos) {
+    ((MQTT*)obj)->subscribe_callback(mosq, mid, qos_count, granted_qos);
+}
+
 /*********************
  * GLOBAL FUNCTIONS
  *********************/
@@ -86,6 +91,8 @@ static void on_log(struct mosquitto *mosq, void *obj, int level, const char *str
      console_log_enable = false;
      qos = 0;
      retain = true;
+     connectionStatusCallback = NULL;
+     topicUpdateCallback = NULL;
 
      // initialise library
      int major, minor, revision, result;
@@ -111,6 +118,7 @@ static void on_log(struct mosquitto *mosq, void *obj, int level, const char *str
      mosquitto_publish_callback_set(mosq, on_publish);
      mosquitto_message_callback_set(mosq, on_message);
      mosquitto_log_callback_set(mosq, on_log);
+     mosquitto_subscribe_callback_set(mosq, on_subscribe);
  }
 
  MQTT::~MQTT() {
@@ -131,7 +139,17 @@ void MQTT::connect(void) {
     if (result != MOSQ_ERR_SUCCESS) {
         sprintf(strbuf, "%s - mosquitto_connect failed: %s [%d]\n", __func__, strerror(result), result);
         throw runtime_error(strbuf);
+    } else {
+        printf ("%s\n", __func__);
     }
+}
+
+void MQTT::registerConnectionCallback(void (*callback) (bool)) {
+    connectionStatusCallback = callback;
+}
+
+void MQTT::registerTopicUpdateCallback(void (*callback) (const char*, const char*)) {
+    topicUpdateCallback = callback;
 }
 
 int MQTT::publish(const char* topic, const char* format, float value) {
@@ -139,6 +157,8 @@ int MQTT::publish(const char* topic, const char* format, float value) {
     if (!connected) {
         fprintf(stderr, "%s: Not Connected!\n", __func__);
         return -1;
+    } else {
+        //printf ("%s: %s\n", __func__, topic);
     }
     sprintf(pub_buf, format, value);
     //printf ("%s: %s %s\n", __func__, topic, pub_buf);
@@ -149,13 +169,40 @@ int MQTT::publish(const char* topic, const char* format, float value) {
     return messageid;
 }
 
+int MQTT::subscribe(const char *topic) {
+    int messageid = 0;
+    int result = mosquitto_subscribe(mosq, &messageid, topic, qos);
+    if (result != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "%s: %s [%s]\n", __func__, mosquitto_strerror(result), topic);
+    } else {
+        printf ("%s: %s\n", __func__, topic);
+    }
+    return messageid;
+}
+
+int MQTT::unsubscribe(const char *topic) {
+    int messageid = 0;
+    int result = mosquitto_unsubscribe(mosq, &messageid, topic);
+    if (result != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "%s: %s [%s]\n", __func__, mosquitto_strerror(result), topic);
+    }
+    return messageid;
+}
+
 void MQTT::message_callback(struct mosquitto *m, const struct mosquitto_message *message) {
-    printf("%s:\n", __func__);
+    //fprintf(stderr, "%s:\n", __func__);
     if(message->payloadlen){
-		printf("%s %s\n", message->topic, (const char *)message->payload);
+		//fprintf(stderr, "%s %s\n", message->topic, (const char *)message->payload);
 	}else{
-		printf("%s (null)\n", message->topic);
+		//fprintf(stderr, "%s (null)\n", message->topic);
 	}
+    if (topicUpdateCallback != NULL) {
+        (*topicUpdateCallback) (message->topic, (const char *)message->payload);
+    }
+}
+
+bool MQTT::isConnected(void) {
+    return connected;
 }
 
 void MQTT::log_callback(struct mosquitto *m, int level, const char *str) {
@@ -163,6 +210,10 @@ void MQTT::log_callback(struct mosquitto *m, int level, const char *str) {
     if (console_log_enable) {
         fprintf(stderr, "%s [%d]: %s\n",__func__ , level, str);
     }
+}
+
+void MQTT::subscribe_callback(struct mosquitto *m, int mid, int qos_count, const int *granted_qos) {
+    printf("%s: mid:%d qos_count:%d\n", __func__, mid, qos_count);
 }
 
 void MQTT::publish_callback(struct mosquitto *m, int mid) {
@@ -176,11 +227,17 @@ void MQTT::connect_callback(struct mosquitto *m, int result) {
      } else {
          fprintf(stderr, "%s: %s\n", __func__ , mosquitto_connack_string(result) );
      }
+     if (connectionStatusCallback != NULL) {
+         (*connectionStatusCallback) (connected);
+     }
 }
 
 void MQTT::disconnect_callback(struct mosquitto *m, int rc) {
      //fprintf(stderr, "%s: %s\n", __func__, mosquitto_strerror(rc) );
      connected = false;
+     if (connectionStatusCallback != NULL) {
+         (*connectionStatusCallback) (connected);
+     }
  }
 
  /*********************

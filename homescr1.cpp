@@ -20,6 +20,8 @@
 
 #include <mosquitto.h>
 
+#include "mqtt.h"
+
 #include "lvgl/lvgl.h"
 
 #include "hardware.h"
@@ -38,6 +40,7 @@ extern void cpuTempUpdate(int x, Tag* t);
 
 Hardware hw;
 TagStore ts;
+MQTT mqtt;
 
 void sigHandler(int signum)
 {
@@ -91,6 +94,7 @@ void var_process(void) {
         Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
         if (tag != NULL) {
             tag->setValue(hw.read_cpu_temp());
+            mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
         }
     }
 }
@@ -179,14 +183,11 @@ int main (int argc, char *argv[])
     signal (SIGHUP, sigHandler);
     signal (SIGTERM, sigHandler);
 
-    // test
-    mosquitto_lib_init();
-
+    mqtt.connect();
     init_values();
     init_tags();
     screen_init();
     screen_create();
     main_loop();
-    mosquitto_lib_cleanup();
     exit_loop();
 }

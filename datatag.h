@@ -87,6 +87,13 @@ public:
     void setValue(int intValue);
 
     /**
+     * Set the value
+     * @param strValue: new value as a string
+     * @returns true on success
+     */
+    bool setValue(const char* strValue);
+
+    /**
      * Get value
      * @return value as double
      */

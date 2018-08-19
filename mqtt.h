@@ -61,6 +61,7 @@ public:
 
     /**
      * callback function for message receive
+     * called by mosquitto when a subscribed topic is updated
      * @param mosq: pointer to mosquitto structure
      * @param message: the received mosquite message
      */
@@ -111,19 +112,6 @@ public:
      */
     bool isConnected(void);
 
-    /**
-     * Read Kernel name and version
-     * @param buffer: text storage buffer
-     * @param maxlen: length of text storage buffer
-     */
-    //int get_kernel_name(char *buffer, int maxlen);
-
-    /**
-     * Read active IP address
-     * @param buffer: text storage buffer
-     * @param maxlen: length of text storage buffer
-     */
-    //int get_ip_address(char *buffer, int maxlen);
 
 private:
     void (*connectionStatusCallback) (bool);     // callback for connection status change

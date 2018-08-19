@@ -38,7 +38,10 @@ time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
 extern char *info_label_text;
 extern void cpuTempUpdate(int x, Tag* t);
 
+// Proto types
 void subscribe_tags(void);
+void mqtt_connection_status(bool status);
+void mqtt_topic_update(const char *topic, const char *value);
 
 Hardware hw;
 TagStore ts;
@@ -165,10 +168,14 @@ void mqtt_connection_status(bool status) {
 // Note: do not store the pointers "topic" & "value", they will be
 // destroyed after this function returns
 void mqtt_topic_update(const char *topic, const char *value) {
-    printf("%s - %s %s\n", __func__, topic, value);
-
-    -- Update tag with new value --
-
+    //printf("%s - %s %s\n", __func__, topic, value);
+    Tag *tp = ts.getTag(topic);
+    if (tp == NULL) {
+        fprintf(stderr, "%s: <%s> not  in ts\n", __func__, topic);
+        return;
+    }
+    tp->setValue(value);
+    //printf("%s - %s: %f\n", __func__, tp->getTopic(), tp->floatValue());
 }
 
 void exit_loop(void)

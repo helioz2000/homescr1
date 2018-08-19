@@ -97,7 +97,7 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
      // initialise library
      int major, minor, revision, result;
      result = mosquitto_lib_version(&major, &minor, &revision);
-     printf("%s lib V%d.%d.%d (%d)\n", __func__, major, minor, revision, result);
+     printf("%s - mosqitto V%d.%d.%d (%d)\n", __func__, major, minor, revision, result);
      mosquitto_lib_init();
 
      // create new mqtt
@@ -139,9 +139,8 @@ void MQTT::connect(void) {
     if (result != MOSQ_ERR_SUCCESS) {
         sprintf(strbuf, "%s - mosquitto_connect failed: %s [%d]\n", __func__, strerror(result), result);
         throw runtime_error(strbuf);
-    } else {
-        printf ("%s\n", __func__);
     }
+    //printf ("%s\n", __func__);
 }
 
 void MQTT::registerConnectionCallback(void (*callback) (bool)) {
@@ -175,7 +174,7 @@ int MQTT::subscribe(const char *topic) {
     if (result != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "%s: %s [%s]\n", __func__, mosquitto_strerror(result), topic);
     } else {
-        printf ("%s: %s\n", __func__, topic);
+        //printf ("%s: %s\n", __func__, topic);
     }
     return messageid;
 }
@@ -189,20 +188,22 @@ int MQTT::unsubscribe(const char *topic) {
     return messageid;
 }
 
+bool MQTT::isConnected(void) {
+    return connected;
+}
+
 void MQTT::message_callback(struct mosquitto *m, const struct mosquitto_message *message) {
     //fprintf(stderr, "%s:\n", __func__);
+    /*
     if(message->payloadlen){
-		//fprintf(stderr, "%s %s\n", message->topic, (const char *)message->payload);
+		fprintf(stderr, "%s %s\n", message->topic, (const char *)message->payload);
 	}else{
-		//fprintf(stderr, "%s (null)\n", message->topic);
+		fprintf(stderr, "%s (null)\n", message->topic);
 	}
+    */
     if (topicUpdateCallback != NULL) {
         (*topicUpdateCallback) (message->topic, (const char *)message->payload);
     }
-}
-
-bool MQTT::isConnected(void) {
-    return connected;
 }
 
 void MQTT::log_callback(struct mosquitto *m, int level, const char *str) {
@@ -213,7 +214,7 @@ void MQTT::log_callback(struct mosquitto *m, int level, const char *str) {
 }
 
 void MQTT::subscribe_callback(struct mosquitto *m, int mid, int qos_count, const int *granted_qos) {
-    printf("%s: mid:%d qos_count:%d\n", __func__, mid, qos_count);
+    //printf("%s: mid:%d qos_count:%d\n", __func__, mid, qos_count);
 }
 
 void MQTT::publish_callback(struct mosquitto *m, int mid) {

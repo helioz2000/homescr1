@@ -158,6 +158,17 @@ void Tag::setValue(int intValue) {
     setValue( (double) intValue );
 }
 
+bool Tag::setValue(const char* strValue) {
+    float newValue;
+    int result = sscanf(strValue, "%f", &newValue);
+    if (result != 1) {
+        fprintf(stderr, "%s - failed to convert <%s> for topic %s\n", __func__, strValue, topic.c_str());
+        return false;
+    }
+    setValue(newValue);
+    return true;
+}
+
 double Tag::doubleValue(void) {
     return topicDoubleValue;
 }

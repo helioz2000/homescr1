@@ -1,6 +1,7 @@
 /**
  * @file screen.cpp
  *
+ * screen objects reference: https://littlevgl.com/object-types
  */
 
 /*********************
@@ -36,6 +37,7 @@ lv_obj_t *tab3;
 lv_obj_t *tab4;
 lv_obj_t *chart;
 lv_obj_t *lv_cpuTemp;
+lv_obj_t *lv_roomTemp[10];
 
 /**********************
  *   PRIVATE PROTOTYPES
@@ -51,7 +53,7 @@ void settings_create(lv_obj_t *parent);
 void screen_init()
 {
     lv_init();
-    
+
     evdev_init();               // initialise event device
     //lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv);
@@ -60,7 +62,7 @@ void screen_init()
     lv_indev_drv_register(&indev_drv);
 
     fbdev_init();
-    
+
     lv_disp_drv_t disp_drv;
     lv_disp_drv_init(&disp_drv);
     disp_drv.disp_flush = fbdev_flush;      // It flushes the internal graphical buffer to the frame buffer
@@ -78,18 +80,18 @@ void screen_create(void)
     lv_obj_set_width(wp, LV_HOR_RES * 4);
     lv_obj_set_protect(wp, LV_PROTECT_POS);
     */
-    
+
     static lv_style_t style_tv_btn_bg;
     lv_style_copy(&style_tv_btn_bg, &lv_style_plain);
     style_tv_btn_bg.body.main_color = LV_COLOR_HEX(0x487fb7);
     style_tv_btn_bg.body.grad_color = LV_COLOR_HEX(0x487fb7);
     style_tv_btn_bg.body.padding.ver = 0;
-    
+
     static lv_style_t style_tv_btn_rel;
     lv_style_copy(&style_tv_btn_rel, &lv_style_btn_rel);
     style_tv_btn_rel.body.empty = 1;
     style_tv_btn_rel.body.border.width = 0;
-    
+
     static lv_style_t style_tv_btn_pr;
     lv_style_copy(&style_tv_btn_pr, &lv_style_btn_pr);
     style_tv_btn_pr.body.radius = 0;
@@ -98,21 +100,21 @@ void screen_create(void)
     style_tv_btn_pr.body.grad_color = LV_COLOR_WHITE;
     style_tv_btn_pr.body.border.width = 0;
     style_tv_btn_pr.text.color = LV_COLOR_GRAY;
-    
+
     tv = lv_tabview_create(lv_scr_act(), NULL);
-    
+
     tab1 = lv_tabview_add_tab(tv, "AirCon");
     tab2 = lv_tabview_add_tab(tv, "Heating");
     tab3 = lv_tabview_add_tab(tv, "Temps");
     tab4 = lv_tabview_add_tab(tv, "Settings");
- 
+
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_BG, &style_tv_btn_bg);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_INDIC, &lv_style_plain);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_REL, &style_tv_btn_rel);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_PR, &style_tv_btn_pr);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_TGL_REL, &style_tv_btn_rel);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_TGL_PR, &style_tv_btn_pr);
-    
+
     aircon_create(tab1);
     heating_create(tab2);
     temps_create(tab3);
@@ -147,7 +149,7 @@ void screen_exit(void) {
     lv_obj_del(tab3);
     lv_obj_del(tab4);
     lv_obj_del(tv);
-    
+
     lv_obj_t * label = lv_label_create(lv_scr_act(), NULL);
     lv_label_set_text(label, "Application Has Been Terminated");
     lv_obj_align(label, NULL, LV_ALIGN_CENTER, 0, 0);
@@ -172,16 +174,22 @@ void cpuTempUpdate(int x, Tag* t)
     lv_label_set_text(lv_cpuTemp, buffer);
 }
 
+void roomTempUpdate(int x, Tag* t)
+{
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "%.1f°C", t->floatValue());
+    lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+}
 
 void settings_create(lv_obj_t *parent)
 {
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
-    
+
     lv_page_set_scrl_fit(parent, false, false);
     lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
     lv_page_set_sb_mode(parent, LV_SB_MODE_OFF);
-    
+
 
     // Create brightness slider
     lv_obj_t *slider = lv_slider_create(parent, NULL);
@@ -194,18 +202,18 @@ void settings_create(lv_obj_t *parent)
     lv_obj_t * bightness_slider_label = lv_label_create(parent, NULL);
     lv_label_set_text(bightness_slider_label, "Brightness");
     lv_obj_align(bightness_slider_label, slider, LV_ALIGN_OUT_TOP_MID, 0, -20);
-    
+
     // Reboot & Shutdown Button List
     lv_obj_t *list1 = lv_list_create(parent, NULL);
     lv_obj_set_size(list1, 150, 170);
     lv_obj_align(list1, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -120, 00);
-    
+
     // Add list elements
     lv_obj_t *btn = lv_list_add(list1, NULL, SYMBOL_LOOP " Reboot", pi_btn_action);
     lv_obj_set_free_num(btn, SCR_CMD_REBOOT);
     btn = lv_list_add(list1, NULL, SYMBOL_POWER " Stop", pi_btn_action);
     lv_obj_set_free_num(btn, SCR_CMD_SHUTDOWN);
-    
+
     // CPU Temperature
     lv_obj_t *obj1 = lv_obj_create(parent, NULL);
     lv_obj_set_size(obj1, 150, 40);
@@ -214,12 +222,12 @@ void settings_create(lv_obj_t *parent)
     lv_cpuTemp = lv_label_create(obj1, NULL);
     lv_label_set_text(lv_cpuTemp, "CPU --.-°C");
     lv_obj_align(lv_cpuTemp, NULL, LV_ALIGN_CENTER, 0, 0);
-    
+
     // Info Label
     lv_obj_t *info_label = lv_label_create(parent, NULL);
     lv_label_set_text(info_label, info_label_text);
     lv_obj_align(info_label, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 10, -10);
-    
+
     /*
     // Create a label above the list
     lv_obj_t * label;
@@ -234,18 +242,18 @@ void settings_create(lv_obj_t *parent)
     lv_obj_align(btn1, NULL, LV_ALIGN_CENTER, 0, 0);
     lv_obj_set_free_num(btn1, 1);   // Set a unique number for the button
     lv_btn_set_action(btn1, LV_BTN_ACTION_CLICK, shutdown_btn_action);
-    
+
     //Add a label to the button
     lv_obj_t * label = lv_label_create(btn1, NULL);
     lv_label_set_text(label, "Shutdown");
-    
+
     // Create reboot button
     lv_obj_t * btn2 = lv_btn_create(parent, NULL);
     lv_cont_set_fit(btn2, true, true); //Enable resizing horizontally and vertically
     lv_obj_align(btn2, btn1, LV_ALIGN_OUT_BOTTOM_MID, 0, 0);
     lv_obj_set_free_num(btn2, 2);   //Set a unique number for the button
     lv_btn_set_action(btn2, LV_BTN_ACTION_CLICK, reboot_btn_action);
-    
+
     //Add a label to the button
     label = lv_label_create(btn2, NULL);
     lv_label_set_text(label, "Reboot");
@@ -254,19 +262,32 @@ void settings_create(lv_obj_t *parent)
 
 void temps_create(lv_obj_t *parent)
 {
+    // Shack Temperature
+    lv_obj_t *obj1 = lv_obj_create(parent, NULL);
+    lv_obj_set_size(obj1, 150, 40);
+    lv_obj_set_style(obj1, &lv_style_plain_color);
+    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+    lv_roomTemp[0] = lv_label_create(obj1, NULL);
+    lv_label_set_text(lv_roomTemp[0], "Shack --.-°C");
+    lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
+}
+
+// Not Used
+void __temps_create(lv_obj_t *parent)
+{
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
-    
+
     lv_page_set_scrl_fit(parent, false, false);
     lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
     lv_page_set_sb_mode(parent, LV_SB_MODE_OFF);
-    
+
     static lv_style_t style_chart;
     lv_style_copy(&style_chart, &lv_style_pretty);
     style_chart.body.opa = LV_OPA_60;
     style_chart.body.radius = 0;
     style_chart.line.color = LV_COLOR_GRAY;
-    
+
     chart = lv_chart_create(parent, NULL);
     lv_obj_set_size(chart, 2 * lv_obj_get_width(parent) / 3, lv_obj_get_height(parent) / 2);
     lv_obj_align(chart, NULL,  LV_ALIGN_IN_TOP_MID, 0, LV_DPI / 4);
@@ -284,12 +305,12 @@ void temps_create(lv_obj_t *parent)
     lv_chart_set_next(chart, ser1, 55);
     lv_chart_set_next(chart, ser1, 70);
     lv_chart_set_next(chart, ser1, 82);
-    
+
     /*Create a bar, an indicator and a knob style*/
     static lv_style_t style_bar;
     static lv_style_t style_indic;
     static lv_style_t style_knob;
-    
+
     lv_style_copy(&style_bar, &lv_style_pretty);
     style_bar.body.main_color =  LV_COLOR_BLACK;
     style_bar.body.grad_color =  LV_COLOR_GRAY;
@@ -298,7 +319,7 @@ void temps_create(lv_obj_t *parent)
     style_bar.body.opa = LV_OPA_60;
     style_bar.body.padding.hor = 0;
     style_bar.body.padding.ver = LV_DPI / 10;
-    
+
     lv_style_copy(&style_indic, &lv_style_pretty);
     style_indic.body.grad_color =  LV_COLOR_MARRON;
     style_indic.body.main_color =  LV_COLOR_RED;
@@ -307,11 +328,11 @@ void temps_create(lv_obj_t *parent)
     style_indic.body.shadow.color = LV_COLOR_RED;
     style_indic.body.padding.hor = LV_DPI / 30;
     style_indic.body.padding.ver = LV_DPI / 30;
-    
+
     lv_style_copy(&style_knob, &lv_style_pretty);
     style_knob.body.radius = LV_RADIUS_CIRCLE;
     style_knob.body.opa = LV_OPA_70;
-    
+
     /*Create a second slider*/
     lv_obj_t *slider = lv_slider_create(parent, NULL);
     lv_slider_set_style(slider, LV_SLIDER_STYLE_BG, &style_bar);
@@ -335,7 +356,7 @@ lv_res_t slider_action(lv_obj_t *slider)
     int16_t v = lv_slider_get_value(slider);
     v = 1000 * 100 / v; /*Convert to range modify values linearly*/
     lv_chart_set_range(chart, 0, v);
-    
+
     return LV_RES_OK;
 }
 
@@ -357,4 +378,3 @@ lv_res_t pi_btn_action(lv_obj_t * btn)
     scr_cmd = (scr_cmd_t)lv_obj_get_free_num(btn); // button number = screen command
     return LV_RES_OK; // Return OK if the button is not deleted
 }
-

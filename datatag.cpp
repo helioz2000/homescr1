@@ -109,7 +109,7 @@ Tag::Tag(const char *topicStr) {
     }
     this->topic = topicStr;
     valueUpdate = NULL;
-    valueUpdateID = -1;
+    _valueUpdateID = -1;
     publish = false;        // subscribe tag
     //cout << topic << endl;
     topicCRC = gen_crc16(topic.data(), topic.length());
@@ -131,13 +131,17 @@ uint16_t Tag::getTopicCrc(void) {
 void Tag::registerCallback(void (*updateCallback) (int, Tag*), int callBackID) {
     //printf("%s - 1\n", __func__);
     valueUpdate = updateCallback;
-    valueUpdateID = callBackID;
+    _valueUpdateID = callBackID;
     //printf("%s - 2\n", __func__);
+}
+
+int Tag::valueUpdateID(void) {
+    return _valueUpdateID;
 }
 
 void Tag::testCallback() {
     if (valueUpdate != NULL) {
-        (*valueUpdate) (valueUpdateID, this);
+        (*valueUpdate) (_valueUpdateID, this);
     }
 }
 
@@ -146,7 +150,7 @@ void Tag::setValue(double doubleValue) {
     lastUpdateTime = time(NULL);
     // call valueUpdate callback if it exists
     if (valueUpdate != NULL) {
-        (*valueUpdate) (valueUpdateID, this);
+        (*valueUpdate) (_valueUpdateID, this);
     }
 }
 

@@ -37,6 +37,7 @@ time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
 
 extern char *info_label_text;
 extern void cpuTempUpdate(int x, Tag* t);
+extern void roomTempUpdate(int x, Tag* t);
 
 // Proto types
 void subscribe_tags(void);
@@ -102,7 +103,6 @@ void var_process(void) {
             mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
         }
     }
-
 }
 
 void init_values(void)
@@ -129,12 +129,19 @@ void init_values(void)
 
 void init_tags(void)
 {
+    // CPU temp
     Tag* tp = ts.addTag((char*) CPU_TEMP_TOPIC);
     tp->setPublish();
+    tp->registerCallback(&cpuTempUpdate, 15);   // update screen
+
+    // Shack Temp is stored in index 0
+    tp = ts.addTag((char*) "binder/home/shack/room/temp");
+    tp->registerCallback(&roomTempUpdate, 0);
+
+    // Testing only
     ts.addTag((char*) "binder/home/screen1/room/temp");
     ts.addTag((char*) "binder/home/screen1/room/hum");
     // = ts.getTag((char*) "binder/home/screen1/room/temp");
-    tp->registerCallback(&cpuTempUpdate, 15);
 }
 
 void init_mqtt(void) {

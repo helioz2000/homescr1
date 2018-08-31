@@ -66,6 +66,12 @@ public:
      */
     void registerCallback(void (*updateCallback) (int,Tag*), int callBackID );
 
+    /**
+     * Set the value
+     * @return the callback ID set with registerCallback
+     */
+    int valueUpdateID();
+
     void testCallback();
 
     /**
@@ -141,7 +147,7 @@ private:
     double topicDoubleValue;            // storage numeric value
     time_t lastUpdateTime;              // last update time (change of value)
     void (*valueUpdate) (int,Tag*);     // callback for value update
-    int valueUpdateID;
+    int _valueUpdateID;                 // ID for value update
     bool publish;                       // true = we publish, false = we subscribe
 };
 

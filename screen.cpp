@@ -175,7 +175,12 @@ void roomTempUpdate(int x, Tag* t)
 {
      char buffer[20];
      snprintf(buffer, sizeof(buffer), roomTempFormat[x], t->floatValue());
-     lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+     // Note: due to multi threading it is possible that this function
+     // is called before the lv_roomTemp array is valid
+     if (lv_roomTemp[t->valueUpdateID()] != NULL) {
+        lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+        //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+    }
 }
 
 

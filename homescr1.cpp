@@ -116,6 +116,7 @@ void var_process(void) {
         // update CPU temperature
         Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
         if (tag != NULL) {
+
             tag->setValue(hw.read_cpu_temp());
             if (mqtt.isConnected()) {
               mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
@@ -170,13 +171,13 @@ void init_tags(void)
     tp->registerCallback(&roomTempUpdate, 1);
 
     // Testing only
-    ts.addTag((char*) "binder/home/screen1/room/temp");
-    ts.addTag((char*) "binder/home/screen1/room/hum");
+    //ts.addTag((char*) "binder/home/screen1/room/temp");
+    //ts.addTag((char*) "binder/home/screen1/room/hum");
     // = ts.getTag((char*) "binder/home/screen1/room/temp");
 }
 
 void mqtt_connect(void) {
-    printf("%s - attempting to connect to mqtt broker.\n", __func__);
+    //printf("%s - attempting to connect to mqtt broker.\n", __func__);
     mqtt.connect();
     //mqtt_connection_timeout = time(NULL) + MQTT_CONNECT_TIMEOUT;
     mqtt_connection_in_progress = true;
@@ -197,11 +198,12 @@ void init_mqtt(void) {
  * Iterate over tag store and process every "subscribe" tag
  */
 void subscribe_tags(void) {
+    //printf("%s\n", __func__);
     Tag* tp = ts.getFirstTag();
     while (tp != NULL) {
         if (tp->isSubscribe()) {
             //printf("%s: %s\n", __func__, tp->getTopic());
-//            mqtt.subscribe(tp->getTopic());
+            mqtt.subscribe(tp->getTopic());
         }
         tp = ts.getNextTag();
     }
@@ -216,17 +218,18 @@ void mqtt_connection_status(bool status) {
     //printf("%s - %d\n", __func__, status);
     // subscribe tags when connection is online
     if (status) {
-        //mqtt_connection_timeout = 0;
+        printf("%s: connected to mqtt broker\n", __func__);
         mqtt_connection_in_progress = false;
         subscribe_tags();
     } else {
         if (mqtt_connection_in_progress) {
             mqtt.disconnect();
             // Note: the timeout is determined by OS network stack
-            fprintf(stderr, "%s - mqtt connection timeout after %lds\n", __func__, time(NULL) - mqtt_connect_time);
+            fprintf(stderr, "%s: mqtt connection timeout after %lds\n", __func__, time(NULL) - mqtt_connect_time);
             mqtt_connection_in_progress = false;
         }
     }
+    //printf("%s - done\n", __func__);
 }
 
 /*
@@ -244,7 +247,6 @@ void mqtt_topic_update(const char *topic, const char *value) {
         return;
     }
     tp->setValue(value);
-    //printf("%s - %s: %f\n", __func__, tp->getTopic(), tp->floatValue());
 }
 
 /*
@@ -298,11 +300,12 @@ int main (int argc, char *argv[])
     signal (SIGTERM, sigHandler);
 
 
-    mqtt.setConsoleLog(true);
+    //mqtt.setConsoleLog(true);
+    init_tags();
     init_mqtt();
     init_values();
     usleep(100000);
-    init_tags();
+
     screen_init();
     screen_create();
     main_loop();

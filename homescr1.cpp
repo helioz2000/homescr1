@@ -30,10 +30,15 @@
 
 #define VAR_PROCESS_INTERVAL 5      // seconds
 
+//#define MQTT_CONNECT_TIMEOUT 5      // seconds
+
 #define CPU_TEMP_TOPIC "binder/home/screen1/cpu/temp"
 
 bool exitSignal = false;
 time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
+//time_t mqtt_connection_timeout = 0;
+time_t mqtt_connect_time = 0;   // time the connection was initiated
+bool mqtt_connection_in_progress = false;
 
 extern char *info_label_text;
 extern void cpuTempUpdate(int x, Tag* t);
@@ -48,6 +53,9 @@ Hardware hw;
 TagStore ts;
 MQTT mqtt;
 
+/*
+ * Handle system signals
+ */
 void sigHandler(int signum)
 {
     char signame[10];
@@ -70,6 +78,9 @@ void sigHandler(int signum)
     exitSignal = true;
 }
 
+/*
+ * Process commands from screen user interface
+ */
 void cmd_process(void)
 {
     switch (screen_getCmd()) {
@@ -92,6 +103,12 @@ void cmd_process(void)
     screen_clearCmd();
 }
 
+/*
+ * Process local variables
+ * Local variables get are process at a fixed time interval
+ * The processing involves reading value from hardware and
+ * publishing the value to MQTT broker
+ */
 void var_process(void) {
     time_t now = time(NULL);
     if (now > var_process_time) {
@@ -100,15 +117,21 @@ void var_process(void) {
         Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
         if (tag != NULL) {
             tag->setValue(hw.read_cpu_temp());
-            mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
+            if (mqtt.isConnected()) {
+              mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
+            }
         }
     }
+
+    // reconnect mqtt if required
+    /*if (!mqtt.isConnected() && !mqtt_connection_in_progress) {
+        mqtt_connect();
+    }*/
 }
 
 void init_values(void)
 {
     char info1[80], info2[80], info3[80], info4[80];
-    //char buffer[240];
     // Initialise brightness
     int value = hw.get_brightness();
     if (value < 10) {
@@ -127,6 +150,10 @@ void init_values(void)
     //printf(info_label_text);
 }
 
+/*
+ * Initialise the tag database (tagstore)
+ *
+ */
 void init_tags(void)
 {
     // CPU temp
@@ -138,42 +165,77 @@ void init_tags(void)
     tp = ts.addTag((char*) "binder/home/shack/room/temp");
     tp->registerCallback(&roomTempUpdate, 0);
 
+    // Bedroom 1 Temp
+    tp = ts.addTag((const char*) "binder/home/bed1/room/temp");
+    tp->registerCallback(&roomTempUpdate, 1);
+
     // Testing only
     ts.addTag((char*) "binder/home/screen1/room/temp");
     ts.addTag((char*) "binder/home/screen1/room/hum");
     // = ts.getTag((char*) "binder/home/screen1/room/temp");
 }
 
+void mqtt_connect(void) {
+    printf("%s - attempting to connect to mqtt broker.\n", __func__);
+    mqtt.connect();
+    //mqtt_connection_timeout = time(NULL) + MQTT_CONNECT_TIMEOUT;
+    mqtt_connection_in_progress = true;
+    mqtt_connect_time = time(NULL);
+}
+
+/*
+ * Initialise the MQTT broker and register callbacks
+ */
 void init_mqtt(void) {
     mqtt.registerConnectionCallback(mqtt_connection_status);
     mqtt.registerTopicUpdateCallback(mqtt_topic_update);
-    mqtt.connect();
+    mqtt_connect();
 }
 
+/*
+ * Subscribe tags to MQTT broker
+ * Iterate over tag store and process every "subscribe" tag
+ */
 void subscribe_tags(void) {
-    // iterate over tag store and process every "subscribe" tag
     Tag* tp = ts.getFirstTag();
     while (tp != NULL) {
         if (tp->isSubscribe()) {
             //printf("%s: %s\n", __func__, tp->getTopic());
-            mqtt.subscribe(tp->getTopic());
+//            mqtt.subscribe(tp->getTopic());
         }
         tp = ts.getNextTag();
     }
 }
 
-// called from mqtt when broker connection status changes
+/*
+ * callback function for MQTT
+ * MQTT notifies a change in connection status by calling this function
+ * This function is registered with MQTT during initialisation
+ */
 void mqtt_connection_status(bool status) {
     //printf("%s - %d\n", __func__, status);
     // subscribe tags when connection is online
     if (status) {
+        //mqtt_connection_timeout = 0;
+        mqtt_connection_in_progress = false;
         subscribe_tags();
+    } else {
+        if (mqtt_connection_in_progress) {
+            mqtt.disconnect();
+            // Note: the timeout is determined by OS network stack
+            fprintf(stderr, "%s - mqtt connection timeout after %lds\n", __func__, time(NULL) - mqtt_connect_time);
+            mqtt_connection_in_progress = false;
+        }
     }
 }
 
-// called from mqtt when a subscribed topic has received an update
-// Note: do not store the pointers "topic" & "value", they will be
-// destroyed after this function returns
+/*
+ * callback function for MQTT
+ * MQTT notifies when a subscribed topic has received an update
+ *
+ * Note: do not store the pointers "topic" & "value", they will be
+ * destroyed after this function returns
+ */
 void mqtt_topic_update(const char *topic, const char *value) {
     //printf("%s - %s %s\n", __func__, topic, value);
     Tag *tp = ts.getTag(topic);
@@ -185,6 +247,9 @@ void mqtt_topic_update(const char *topic, const char *value) {
     //printf("%s - %s: %f\n", __func__, tp->getTopic(), tp->floatValue());
 }
 
+/*
+ * called on program exit
+ */
 void exit_loop(void)
 {
     hw.set_brightness(screen_brightness());
@@ -229,10 +294,11 @@ void main_loop()
 int main (int argc, char *argv[])
 {
     signal (SIGINT, sigHandler);
-    signal (SIGHUP, sigHandler);
+    //signal (SIGHUP, sigHandler);
     signal (SIGTERM, sigHandler);
 
 
+    mqtt.setConsoleLog(true);
     init_mqtt();
     init_values();
     usleep(100000);

@@ -95,10 +95,10 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
      topicUpdateCallback = NULL;
 
      // initialise library
+     mosquitto_lib_init();
      int major, minor, revision, result;
      result = mosquitto_lib_version(&major, &minor, &revision);
      printf("%s - mosqitto V%d.%d.%d (%d)\n", __func__, major, minor, revision, result);
-     mosquitto_lib_init();
 
      // create new mqtt
      mosq = mosquitto_new(CLIENT_ID, false, this);  // "this" provides a link from calllback to class instance
@@ -122,15 +122,19 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
  }
 
  MQTT::~MQTT() {
-     //printf("%s\n", __func__);
+     //printf("%s - Connected: %d\n", __func__, connected);
      if (connected) mosquitto_disconnect(mosq) ;
-     mosquitto_loop_stop(mosq, false);
+     mosquitto_loop_stop(mosq, true); // Note: must be true or this will block
      if (mosq != NULL) {
          mosquitto_destroy(mosq);
          mosq = NULL;
      }
      mosquitto_lib_cleanup();
  }
+
+void MQTT::setConsoleLog(bool enable) {
+    console_log_enable = enable;
+}
 
 void MQTT::connect(void) {
     char strbuf[255];
@@ -141,6 +145,10 @@ void MQTT::connect(void) {
         throw runtime_error(strbuf);
     }
     //printf ("%s\n", __func__);
+}
+
+void MQTT::disconnect(void) {
+    if (connected) mosquitto_disconnect(mosq) ;
 }
 
 void MQTT::registerConnectionCallback(void (*callback) (bool)) {

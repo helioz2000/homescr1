@@ -37,12 +37,16 @@ lv_obj_t *tab3;
 lv_obj_t *tab4;
 lv_obj_t *chart;
 lv_obj_t *lv_cpuTemp;
-lv_obj_t *lv_roomTemp[10];
+
+#define ROOM_TEMPS_MAX 5
+lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
+
+const char* roomTempFormat[ROOM_TEMPS_MAX] = { "Shack %.1f°C", "Bed1 %.1f°C", NULL, NULL, NULL };
 
 /**********************
  *   PRIVATE PROTOTYPES
  **********************/
-void aircon_create(lv_obj_t *parent);
+void coolheat_create(lv_obj_t *parent);
 void heating_create(lv_obj_t *parent);
 void temps_create(lv_obj_t *parent);
 void settings_create(lv_obj_t *parent);
@@ -103,8 +107,8 @@ void screen_create(void)
 
     tv = lv_tabview_create(lv_scr_act(), NULL);
 
-    tab1 = lv_tabview_add_tab(tv, "AirCon");
-    tab2 = lv_tabview_add_tab(tv, "Heating");
+    tab1 = lv_tabview_add_tab(tv, "Cool-Heat");
+    tab2 = lv_tabview_add_tab(tv, "- - - - ");
     tab3 = lv_tabview_add_tab(tv, "Temps");
     tab4 = lv_tabview_add_tab(tv, "Settings");
 
@@ -115,7 +119,7 @@ void screen_create(void)
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_TGL_REL, &style_tv_btn_rel);
     lv_tabview_set_style(tv, LV_TABVIEW_STYLE_BTN_TGL_PR, &style_tv_btn_pr);
 
-    aircon_create(tab1);
+    coolheat_create(tab1);
     heating_create(tab2);
     temps_create(tab3);
     settings_create(tab4);
@@ -158,27 +162,94 @@ void screen_exit(void) {
 /**********************
  *   PRIVATE FUNCTIONS
  **********************/
-void aircon_create(lv_obj_t *parent)
-{
-}
-
-void heating_create(lv_obj_t *parent)
-{
-}
 
 void cpuTempUpdate(int x, Tag* t)
 {
-    char buffer[20];
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
-    lv_label_set_text(lv_cpuTemp, buffer);
+     char buffer[20];
+     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+     snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
+     lv_label_set_text(lv_cpuTemp, buffer);
 }
 
 void roomTempUpdate(int x, Tag* t)
 {
-    char buffer[20];
-    snprintf(buffer, sizeof(buffer), "%.1f°C", t->floatValue());
-    lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+     char buffer[20];
+     snprintf(buffer, sizeof(buffer), roomTempFormat[x], t->floatValue());
+     lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+}
+
+
+void coolheat_create(lv_obj_t *parent)
+{
+    lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
+    lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
+
+    lv_page_set_scrl_fit(parent, false, false);
+    lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
+    lv_page_set_sb_mode(parent, LV_SB_MODE_OFF);
+
+    lv_obj_t * label = lv_label_create(parent, NULL);
+    lv_label_set_text(label, "Test");
+    lv_obj_align(label, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
+
+    // Draw building outline
+    static lv_point_t line_points[] = {{0, 0}, {799, 0}, {799, 426}, {0, 426}, {0, 0}};
+    lv_obj_t *line1;
+    line1 = lv_line_create(parent, NULL);
+    lv_line_set_points(line1, line_points, 5);
+    lv_obj_set_pos(line1, 0, 0);
+    //lv_obj_set_y(line1, 100);
+    //lv_obj_align(line1, NULL, LV_ALIGN_CENTER, 0, 0);
+
+}
+
+void heating_create(lv_obj_t *parent)
+{
+    lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
+    lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
+
+    lv_page_set_scrl_fit(parent, false, false);
+    lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
+    lv_page_set_sb_mode(parent, LV_SB_MODE_OFF);
+}
+
+void temps_create(lv_obj_t *parent)
+{
+    lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
+    lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
+
+    lv_page_set_scrl_fit(parent, false, false);
+    lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
+    lv_page_set_sb_mode(parent, LV_SB_MODE_OFF);
+
+/*
+    // Draw building outline
+    static lv_point_t line_points[] = {{0, 0}, {750, 0}, {750, 300}, {0, 300}, {0, 0}};
+    lv_obj_t *line1;
+    line1 = lv_line_create(parent, NULL);
+    lv_line_set_points(line1, line_points, 5);     // Set the points
+    lv_obj_set_pos(line1, 0, 0);
+    //lv_obj_align(line1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
+*/
+
+    // Shack Temperature
+    lv_obj_t *obj1 = lv_obj_create(parent, NULL);
+    lv_obj_set_size(obj1, 150, 40);
+    lv_obj_set_style(obj1, &lv_style_plain_color);
+    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
+    lv_roomTemp[0] = lv_label_create(obj1, NULL);
+    lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
+    lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
+
+    // Bedroom 1 Temperature
+    lv_obj_t *obj2 = lv_obj_create(parent, NULL);
+    lv_obj_set_size(obj2, 150, 40);
+    lv_obj_set_style(obj2, &lv_style_plain_color);
+    lv_obj_align(obj2, parent, LV_ALIGN_IN_TOP_LEFT, 20, 80);
+    lv_roomTemp[1] = lv_label_create(obj2, NULL);
+    lv_label_set_text(lv_roomTemp[1], roomTempFormat[1]);
+    lv_obj_align(lv_roomTemp[1], NULL, LV_ALIGN_CENTER, 0, 0);
+
 }
 
 void settings_create(lv_obj_t *parent)
@@ -260,17 +331,6 @@ void settings_create(lv_obj_t *parent)
     */
 }
 
-void temps_create(lv_obj_t *parent)
-{
-    // Shack Temperature
-    lv_obj_t *obj1 = lv_obj_create(parent, NULL);
-    lv_obj_set_size(obj1, 150, 40);
-    lv_obj_set_style(obj1, &lv_style_plain_color);
-    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
-    lv_roomTemp[0] = lv_label_create(obj1, NULL);
-    lv_label_set_text(lv_roomTemp[0], "Shack --.-°C");
-    lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
-}
 
 // Not Used
 void __temps_create(lv_obj_t *parent)

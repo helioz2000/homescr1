@@ -29,6 +29,16 @@ public:
     void connect(void);
 
     /**
+     * Disconnect from the MQTT broker
+     */
+    void disconnect(void);
+
+    /**
+     * enable / disable console logging
+     */
+    void setConsoleLog(bool enable);
+
+    /**
      * register callback for connection status change
      */
     void registerConnectionCallback(void (*callback) (bool));

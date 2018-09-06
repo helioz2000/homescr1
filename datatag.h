@@ -13,9 +13,9 @@
  The Tag class provides for a callback interface which is intended to update
  a user interface element (e.g. display value) only when data changes
 
- The "publish" member defines if a tag's value is published (via mqtt)
- or if it is subscribed. This information is used outside this class to
- determine if the value is received from the broker or written to the broker.
+ The "publish" member defines if a tag's value is published (written)
+ to an mqtt broker or if it is subscribed (read from MQTT broker).
+ This information is used outside this class.
 -----------------------------------------------------------------------------
 */
 

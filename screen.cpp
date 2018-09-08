@@ -41,7 +41,8 @@ lv_obj_t *lv_cpuTemp;
 #define ROOM_TEMPS_MAX 5
 lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
 
-const char* roomTempFormat[ROOM_TEMPS_MAX] = { "Shack %.1f°C", "Bed1 %.1f°C", NULL, NULL, NULL };
+const char* roomTempFormat[ROOM_TEMPS_MAX] = { "This %.1f°C", "Shack %.1f°C",
+            "Bed1 %.1f°C", NULL, NULL };
 
 /**********************
  *   PRIVATE PROTOTYPES
@@ -237,23 +238,33 @@ void temps_create(lv_obj_t *parent)
     //lv_obj_align(line1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
 */
 
+    // Screen Room Temperature
+    lv_obj_t *obj0 = lv_obj_create(parent, NULL);
+    lv_obj_set_size(obj0, 150, 40);
+    lv_obj_set_style(obj0, &lv_style_plain_color);
+    lv_obj_align(obj0, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
+    lv_roomTemp[0] = lv_label_create(obj0, NULL);
+    lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
+    lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
+
+
     // Shack Temperature
     lv_obj_t *obj1 = lv_obj_create(parent, NULL);
     lv_obj_set_size(obj1, 150, 40);
     lv_obj_set_style(obj1, &lv_style_plain_color);
-    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
-    lv_roomTemp[0] = lv_label_create(obj1, NULL);
-    lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
-    lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 80);
+    lv_roomTemp[1] = lv_label_create(obj1, NULL);
+    lv_label_set_text(lv_roomTemp[1], roomTempFormat[1]);
+    lv_obj_align(lv_roomTemp[1], NULL, LV_ALIGN_CENTER, 0, 0);
 
     // Bedroom 1 Temperature
     lv_obj_t *obj2 = lv_obj_create(parent, NULL);
     lv_obj_set_size(obj2, 150, 40);
     lv_obj_set_style(obj2, &lv_style_plain_color);
-    lv_obj_align(obj2, parent, LV_ALIGN_IN_TOP_LEFT, 20, 80);
-    lv_roomTemp[1] = lv_label_create(obj2, NULL);
-    lv_label_set_text(lv_roomTemp[1], roomTempFormat[1]);
-    lv_obj_align(lv_roomTemp[1], NULL, LV_ALIGN_CENTER, 0, 0);
+    lv_obj_align(obj2, parent, LV_ALIGN_IN_TOP_LEFT, 20, 140);
+    lv_roomTemp[2] = lv_label_create(obj2, NULL);
+    lv_label_set_text(lv_roomTemp[2], roomTempFormat[2]);
+    lv_obj_align(lv_roomTemp[2], NULL, LV_ALIGN_CENTER, 0, 0);
 
 }
 

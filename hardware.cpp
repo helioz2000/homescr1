@@ -36,17 +36,22 @@ bool screen_saver_active = false;
 
 Hardware::Hardware()
 {
+    //fprintf(stderr, "%s: Constructor called\n", __func__);
     touch_fd = -1;
     screen_saver_active = false;
     // preset screen saver timeout
     time_t now = time(NULL);
     screen_timout = now + SCREEN_SAVER_TIME;
-    
+
     // open touch screen input for screen saver
     touch_fd = open(TOUCH_INPUT_PATH, O_RDONLY | O_NONBLOCK);
     if (touch_fd == -1) {
         printf("Failed to open Touch Input\n");
     }
+}
+
+Hardware::~Hardware() {
+  //fprintf(stderr, "%s: Destructor called\n", __func__);
 }
 
 void Hardware::process_screen_saver(int brightness)
@@ -89,7 +94,7 @@ int Hardware::get_ip_address(char *buffer, int maxlen)
     char data[128];
     FILE *pf;
     int length = -1;
-    
+
     // Read IP address (IPV4 + IPV6)
     sprintf(buf, "hostname -I");
     pf = popen(buf,"r");
@@ -166,7 +171,7 @@ bool Hardware::set_brightness(int new_brightness)
 {
     char buffer[80];
     int brightness_fd;
-  
+
     brightness_fd = open(BRIGTHNESS_CONTROL, O_RDWR);
     if (brightness_fd != -1) {
         sprintf(buffer,"%d", new_brightness);
@@ -214,8 +219,6 @@ float Hardware::read_cpu_temp(void)
         retval = retval / 1000.0;
         close(fd);
     }
-    
+
     return retval;
 }
-
-

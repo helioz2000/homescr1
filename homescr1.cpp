@@ -27,12 +27,14 @@
 #include "hardware.h"
 #include "screen.h"
 #include "datatag.h"
+#include "mcp9808/mcp9808.h"
 
 #define VAR_PROCESS_INTERVAL 5      // seconds
 
 //#define MQTT_CONNECT_TIMEOUT 5      // seconds
 
 #define CPU_TEMP_TOPIC "binder/home/screen1/cpu/temp"
+#define ENV_TEMP_TOPIC "binder/home/screen1/env/temp"
 
 bool exitSignal = false;
 time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
@@ -52,6 +54,7 @@ void mqtt_topic_update(const char *topic, const char *value);
 Hardware hw;
 TagStore ts;
 MQTT mqtt;
+Mcp9808 envTempSensor;    // Environment temperature sensor at rear of screen
 
 /*
  * Handle system signals
@@ -110,16 +113,28 @@ void cmd_process(void)
  * publishing the value to MQTT broker
  */
 void var_process(void) {
+    float fValue;
     time_t now = time(NULL);
     if (now > var_process_time) {
         var_process_time = now + VAR_PROCESS_INTERVAL;
+
         // update CPU temperature
         Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
         if (tag != NULL) {
-
             tag->setValue(hw.read_cpu_temp());
             if (mqtt.isConnected()) {
               mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
+            }
+        }
+
+        // update environment temperature
+        tag = ts.getTag((const char*) ENV_TEMP_TOPIC);
+        if (tag != NULL) {
+            if (envTempSensor.readTempC(&fValue)) {
+                tag->setValue(fValue);
+                if (mqtt.isConnected()) {
+                    mqtt.publish(ENV_TEMP_TOPIC, "%.1f", tag->floatValue() );
+                }
             }
         }
     }
@@ -162,13 +177,18 @@ void init_tags(void)
     tp->setPublish();
     tp->registerCallback(&cpuTempUpdate, 15);   // update screen
 
+    // Environment temperature is stored in index 0
+    tp = ts.addTag((char*) ENV_TEMP_TOPIC);
+    tp->setPublish();
+    tp->registerCallback(&roomTempUpdate, 0);   // update screen
+
     // Shack Temp is stored in index 0
     tp = ts.addTag((char*) "binder/home/shack/room/temp");
-    tp->registerCallback(&roomTempUpdate, 0);
+    tp->registerCallback(&roomTempUpdate, 1);
 
     // Bedroom 1 Temp
     tp = ts.addTag((const char*) "binder/home/bed1/room/temp");
-    tp->registerCallback(&roomTempUpdate, 1);
+    tp->registerCallback(&roomTempUpdate, 2);
 
     // Testing only
     //ts.addTag((char*) "binder/home/screen1/room/temp");
@@ -297,15 +317,13 @@ int main (int argc, char *argv[])
 {
     signal (SIGINT, sigHandler);
     //signal (SIGHUP, sigHandler);
-    signal (SIGTERM, sigHandler);
-
+    //signal (SIGTERM, sigHandler);
 
     //mqtt.setConsoleLog(true);
     init_tags();
     init_mqtt();
     init_values();
     usleep(100000);
-
     screen_init();
     screen_create();
     main_loop();

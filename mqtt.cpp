@@ -31,6 +31,7 @@
 #define MQTT_BROKER_ADDRESS "192.168.0.124"
 #define MQTT_BROKER_PORT 1883
 #define MQTT_BROKER_KEEPALIVE 60
+#define MQTT_RETAIN false
 
 using namespace std;
 
@@ -90,7 +91,7 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
      connected = false;
      console_log_enable = false;
      qos = 0;
-     retain = true;
+     retain = MQTT_RETAIN;
      connectionStatusCallback = NULL;
      topicUpdateCallback = NULL;
 

@@ -39,10 +39,13 @@ include ./lv_drivers/indev/indev.mk
 OBJDIR = ../obj
 
 CSRCS += $(wildcard *.c)
-CPPSRCS = $(wildcard *.cpp)
+CPPSRCS += $(wildcard *.cpp)
+CPPSRCS += mcp9808/mcp9808.cpp
 
 COBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(CSRCS))
-CPPOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPPSRCS))
+//COBJS = $(patsubst %.c,%.o,$(CSRCS))
+//CPPOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPPSRCS))
+CPPOBJS = $(patsubst %.cpp,%.o,$(CPPSRCS))
 
 SRCS = $(CSRCS) $(CPPSRCS)
 OBJS = $(COBJS) $(CPPOBJS)
@@ -55,7 +58,8 @@ $(OBJDIR)/%.o: %.c
 	@$(CC)  $(CFLAGS) -c $< -o $@
 	@echo "CC $<"
 
-$(OBJDIR)/%.o: %.cpp
+#$(OBJDIR)/%.o: %.cpp
+%.o: %.cpp
 	@$(CXX)  $(CFLAGS) -c $< -o $@
 	@echo "CXX $<"
 

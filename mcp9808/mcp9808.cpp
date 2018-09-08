@@ -7,6 +7,7 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include "mcp9808.h"
 
@@ -25,7 +26,6 @@ Mcp9808::Mcp9808() {
 Mcp9808::Mcp9808(const unsigned char address) {
 	//fprintf(stderr, "%s: Para Constructor called\n", __func__);
 	init(address);
-	openI2Cbus();
 }
 
 Mcp9808::~Mcp9808() {
@@ -37,9 +37,13 @@ Mcp9808::~Mcp9808() {
 		printf("%s: I2C bus closed\n", __func__);
 #endif
 	}
+	if (_read_failure_count > 0) {
+		syslog(LOG_NOTICE, "MCP9808 read failures: %ld", _read_failure_count);
+	}
 }
 
 void Mcp9808::init(const unsigned char address) {
+	_read_failure_count = 0;
 	_i2c_address = address;
 	_config_done = false;
 	_i2c_bus_file = -1;
@@ -75,6 +79,7 @@ bool Mcp9808::readTempC(float *tempValue) {
 
 	if (_i2c_bus_file < 0) {
 		if (!openI2Cbus()) {
+			_read_failure_count++;
 			return false;
 		}
 	}
@@ -82,6 +87,7 @@ bool Mcp9808::readTempC(float *tempValue) {
 	if (!_config_done) {
 		if (!config()) {
 			fprintf(stderr, "%s: config() failed \n", __func__);
+			_read_failure_count++;
 			return false;
 		}
 	}
@@ -92,7 +98,9 @@ bool Mcp9808::readTempC(float *tempValue) {
 	char data[2] = {0};
 	if(read(_i2c_bus_file, data, 2) != 2)
 	{
+		syslog(LOG_ERR, "I2C read data error");
 		fprintf(stderr, "%s: Input/Output error \n", __func__);
+		_read_failure_count++;
 		return false;
 	} else {
 		// Convert the data to 13-bits
@@ -129,6 +137,7 @@ bool Mcp9808::openI2Cbus(void) {
 	const char *bus = I2C_BUS;
 	if ((_i2c_bus_file = open(bus, O_RDWR)) < 0)
 	{
+		syslog(LOG_ERR, "Failed to open I2C bus [%s]", bus);
 		fprintf(stderr, "%s: Failed to open I2C bus [%s] \n", __func__, bus);
 		return false;
 	} else {

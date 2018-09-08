@@ -42,6 +42,7 @@ private:
     int _i2c_bus_file;          // file used to access I2C bus
     unsigned char _i2c_address;       // address of mcp9808
     bool _config_done;
+    unsigned long _read_failure_count;
 
     bool openI2Cbus(void);
     bool config(void);

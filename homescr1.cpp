@@ -17,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include <mosquitto.h>
 
@@ -135,6 +136,8 @@ void var_process(void) {
                 if (mqtt.isConnected()) {
                     mqtt.publish(ENV_TEMP_TOPIC, "%.1f", tag->floatValue() );
                 }
+            } else {
+                syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");
             }
         }
     }
@@ -238,14 +241,17 @@ void mqtt_connection_status(bool status) {
     //printf("%s - %d\n", __func__, status);
     // subscribe tags when connection is online
     if (status) {
-        printf("%s: connected to mqtt broker\n", __func__);
+        syslog(LOG_INFO, "Connected to MQTT broker [%s]", mqtt.server());
+        printf("%s: connected to mqtt broker [%s]\n", __func__, mqtt.server());
         mqtt_connection_in_progress = false;
         subscribe_tags();
     } else {
         if (mqtt_connection_in_progress) {
             mqtt.disconnect();
             // Note: the timeout is determined by OS network stack
-            fprintf(stderr, "%s: mqtt connection timeout after %lds\n", __func__, time(NULL) - mqtt_connect_time);
+            unsigned long timeout = time(NULL) - mqtt_connect_time;
+            syslog(LOG_INFO, "mqtt connection timeout after %lds", timeout);
+            fprintf(stderr, "%s: mqtt connection timeout after %lds\n", __func__, timeout);
             mqtt_connection_in_progress = false;
         }
     }

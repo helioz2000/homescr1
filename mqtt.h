@@ -15,6 +15,8 @@
 
 #include <mosquitto.h>
 
+#include <string>
+
 class MQTT {
 public:
     // Constructor
@@ -106,14 +108,28 @@ public:
     /**
      * subscribe to a topic
      * @param topic: topic string
+     * @return: message ID, can be used for further tracking
      */
     int subscribe(const char *topic);
 
     /**
      * unsubscribe from a topic
      * @param topic: topic string
+     * @return: message ID, can be used for further tracking
      */
     int unsubscribe(const char *topic);
+
+    /**
+     * get MQTT server
+     * @return: mqtt server
+     */
+    const char* server(void);
+
+    /**
+     * get MQTT server port
+     * @return: mqtt server port
+     */
+    unsigned int port(void);
 
     /**
      * check connection status
@@ -127,14 +143,17 @@ private:
     void (*connectionStatusCallback) (bool);     // callback for connection status change
     void (*topicUpdateCallback) (const char *topic, const char *value);     // callback for topic update
 
-    struct mosquitto *mosq;
-    bool connected;
-    char pub_buf[100];
+    struct mosquitto *_mosq;
+    bool _connected;
+    char _pub_buf[100];
+    std::string _mqttServer;
+    unsigned int _mqttPort;
+    int _mqttKeepalive;
 
-    bool console_log_enable;    // for mosqitto logging
+    bool _console_log_enable;    // for mosqitto logging
 
-    int qos;        // quality of service [0..2]
-    bool retain;    // reained message (last known value)
+    int _qos;        // quality of service [0..2]
+    bool _retain;    // reained message (last known value)
 };
 
 #endif /* HARDWARE_H */

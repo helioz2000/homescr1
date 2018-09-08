@@ -38,10 +38,14 @@
 #define ENV_TEMP_TOPIC "binder/home/screen1/env/temp"
 
 bool exitSignal = false;
+bool debugEnabled = false;
+bool runningAsDaemon = false;
 time_t var_process_time = time(NULL) + VAR_PROCESS_INTERVAL;
 //time_t mqtt_connection_timeout = 0;
 time_t mqtt_connect_time = 0;   // time the connection was initiated
 bool mqtt_connection_in_progress = false;
+std::string processName;
+
 
 extern char *info_label_text;
 extern void cpuTempUpdate(int x, Tag* t);
@@ -79,6 +83,7 @@ void sigHandler(int signum)
     }
 
     printf("Received %s\n", signame);
+    syslog(LOG_INFO, "Received %s", signame);
     exitSignal = true;
 }
 
@@ -87,14 +92,15 @@ void sigHandler(int signum)
  */
 void cmd_process(void)
 {
+    std::string cmdStr;
     switch (screen_getCmd()) {
         case SCR_CMD_SHUTDOWN:
-            printf("Shutdown\n");
+            cmdStr = "Shutdown";
             hw.shutdown(false);
             exitSignal = true;
             break;
         case SCR_CMD_REBOOT:
-            printf("Reboot\n");
+            cmdStr = "Reboot";
             hw.shutdown(true);
             exitSignal = true;
             break;
@@ -105,6 +111,10 @@ void cmd_process(void)
             break;
     }
     screen_clearCmd();
+    if (exitSignal) {
+        printf("%s - %s\n", __func__, cmdStr.c_str());
+        syslog(LOG_INFO, "User selected %s", cmdStr.c_str());
+    }
 }
 
 /*
@@ -242,7 +252,7 @@ void mqtt_connection_status(bool status) {
     // subscribe tags when connection is online
     if (status) {
         syslog(LOG_INFO, "Connected to MQTT broker [%s]", mqtt.server());
-        printf("%s: connected to mqtt broker [%s]\n", __func__, mqtt.server());
+        printf("%s: Connected to mqtt broker [%s]\n", __func__, mqtt.server());
         mqtt_connection_in_progress = false;
         subscribe_tags();
     } else {
@@ -253,6 +263,9 @@ void mqtt_connection_status(bool status) {
             syslog(LOG_INFO, "mqtt connection timeout after %lds", timeout);
             fprintf(stderr, "%s: mqtt connection timeout after %lds\n", __func__, timeout);
             mqtt_connection_in_progress = false;
+        } else {
+            syslog(LOG_WARNING, "Disconnected from MQTT broker [%s]", mqtt.server());
+            fprintf(stderr, "%s: Disconnected from MQTT broker [%s]\n", __func__, mqtt.server());
         }
     }
     //printf("%s - done\n", __func__);
@@ -318,12 +331,44 @@ void main_loop()
     printf("CPU time %.3fms - %.3fms\n", min_time*1000, max_time*1000);
 }
 
+void argument(const char *arg) {
+    if (arg[0] == '-') {
+        switch (arg[1]) {
+            case 'd':
+                debugEnabled = true;
+                printf("Debug enabled\n");
+                break;
+            default:
+                fprintf(stderr, "unknown argument: %s\n", arg);
+                syslog(LOG_NOTICE, "unknown argument: %s", arg);
+        }
+    }
+}
 
 int main (int argc, char *argv[])
 {
+    int i;
+
+    if ( getppid() == 1) {
+        runningAsDaemon = true;
+    }
+
+    processName =  argv[0];
+    for (i = 1; i < argc; i++) {
+        argument( argv[i] );
+    }
+
+    syslog(LOG_INFO,"[%s] PID: %d PPID: %d", argv[0], getpid(), getppid());
+    
     signal (SIGINT, sigHandler);
     //signal (SIGHUP, sigHandler);
-    //signal (SIGTERM, sigHandler);
+
+    // catch SIGTERM only if running as daemon (started via systemctl)
+    // when run from command line SIGTERM provides a last resort method
+    // of killing the process regardless of any programming errors.
+    if (runningAsDaemon) {
+        signal (SIGTERM, sigHandler);
+    }
 
     //mqtt.setConsoleLog(true);
     init_tags();
@@ -334,4 +379,5 @@ int main (int argc, char *argv[])
     screen_create();
     main_loop();
     exit_loop();
+    syslog(LOG_INFO, "exiting");
 }

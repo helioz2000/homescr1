@@ -43,10 +43,12 @@ private:
     unsigned char _i2c_address;       // address of mcp9808
     bool _config_done;
     unsigned long _read_failure_count;
+    float _tempHist[5];
 
     bool openI2Cbus(void);
     bool config(void);
     void init(const unsigned char address);
+    float tempHist(float newTemp);
 
 };
 

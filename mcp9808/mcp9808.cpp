@@ -3,11 +3,14 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include <linux/i2c-dev.h>
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <syslog.h>
+#include <errno.h>
+#include <string.h>
 
 #include "mcp9808.h"
 
@@ -47,9 +50,34 @@ void Mcp9808::init(const unsigned char address) {
 	_i2c_address = address;
 	_config_done = false;
 	_i2c_bus_file = -1;
+
+}
+
+float Mcp9808::tempHist(float newTemp) {
+	if (_tempHist[0] < -100.0) {
+		_tempHist[0] = newTemp;
+		return newTemp;
+	}
+	float diff = fabs(_tempHist[0] - newTemp);
+	// if differential is too big ignore the new reading and return the old one
+	if (diff > 10) {
+		return _tempHist[0];
+	}
+	// shift old temperatures in FIFO
+	for (int i=5; i<0; i--){
+		_tempHist[i] = _tempHist[i-1];
+	}
+	// add new temp
+	_tempHist[0] = newTemp;
+	return newTemp;
 }
 
 bool Mcp9808::config(void) {
+
+	for (int i=0; i<4; i++) {
+		_tempHist[i] = -500.0;
+	}
+
     if (_i2c_bus_file < 0) {
 		return false;
 	}
@@ -64,18 +92,18 @@ bool Mcp9808::config(void) {
 	config[1] = 0x00;
 	config[2] = 0x00;
 	write(_i2c_bus_file, config, 3);
-	// Select resolution rgister(0x08)
-	// Resolution = +0.0625 / C(0x03)
-	config[0] = 0x08;
-	config[1] = 0x03;
+
+	config[0] = 0x08;		// Select resolution register(0x08)
+	config[1] = 0x03;		// Resolution = +0.0625 / C(0x03)
 	write(_i2c_bus_file, config, 2);
 
-    _config_done = true;
+  _config_done = true;
 	return true;
 }
 
 bool Mcp9808::readTempC(float *tempValue) {
 	float cTemp;
+  ssize_t bytes_written;
 
 	if (_i2c_bus_file < 0) {
 		if (!openI2Cbus()) {
@@ -94,29 +122,47 @@ bool Mcp9808::readTempC(float *tempValue) {
 	// Read 2 bytes of data from register(0x05)
 	// temp msb, temp lsb
 	char reg[1] = {0x05};
-	write(_i2c_bus_file, reg, 1);
+	bytes_written = write(_i2c_bus_file, reg, 1);
+	if (bytes_written < 0) {
+		  syslog(LOG_ERR, "I2C write data error: %s", strerror(errno));
+			fprintf(stderr, "%s: I2C write data error: %s\n", __func__, strerror(errno));
+			_read_failure_count++;
+			return false;
+	}
+	if (bytes_written != 1) {
+		  syslog(LOG_ERR, "I2C write data error ");
+			fprintf(stderr, "%s: I2C write data error\n", __func__);
+			_read_failure_count++;
+			return false;
+	}
 	char data[2] = {0};
-	if(read(_i2c_bus_file, data, 2) != 2)
-	{
+	if(read(_i2c_bus_file, data, 2) != 2) {
 		syslog(LOG_ERR, "I2C read data error");
 		fprintf(stderr, "%s: Input/Output error \n", __func__);
 		_read_failure_count++;
 		return false;
-	} else {
-		// Convert the data to 13-bits
-		int temp = ((data[0] & 0x1F) * 256 + data[1]);
-		if(temp > 4095)
-		{
-			temp -= 8192;
-		}
-		cTemp = temp * 0.0625;
+	}
 
+	// Convert the data to 13-bits
+	int temp = ((data[0] & 0x1F) * 256 + data[1]);
+	if(temp > 4095) {
+			temp -= 8192;
+	}
+	cTemp = tempHist(temp * 0.0625);
+
+  /*
+    //Sanity check
+		if ( (cTemp == 1.8) || (cTemp == 0.0) || (cTemp > 80.0) || (cTemp < -20.0)  ) {
+			syslog(LOG_ERR, "MCP9808 sanity check error [%f]", cTemp);
+			return false;
+		}
+  */
 #ifdef MCP9808_DEBUG
 		// Debug output data to screen
 		printf("Temperature: %.2f C \n", cTemp);
 #endif
-	}
 	*tempValue = cTemp;
+
 	return true;
 }
 

@@ -23,12 +23,12 @@
 
 #include "mqtt.h"
 
-#include "lvgl/lvgl.h"
+#include "lvgl.h"
 
 #include "hardware.h"
 #include "screen.h"
 #include "datatag.h"
-#include "mcp9808/mcp9808.h"
+#include "mcp9808.h"
 
 #define VAR_PROCESS_INTERVAL 5      // seconds
 

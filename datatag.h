@@ -22,12 +22,27 @@
 #ifndef _DATATAG_H_
 #define _DATATAG_H_
 
+/*********************
+ *      INCLUDES
+ *********************/
 #include <stdint.h>
 
 #include <iostream>
 #include <string>
 
+/*********************
+ *      DEFINES
+ *********************/
 #define MAX_TAG_NUM 100         // The mximum number of tags which can be stored in TagList
+
+/**********************
+ *      TYPEDEFS
+ **********************/
+    typedef enum
+    {
+        TAG_TYPE_NUMERIC = 0,
+        TAG_TYPE_BOOL = 1
+    }tag_type_t;
 
 
 class Tag {
@@ -118,37 +133,52 @@ public:
     int intValue(void);
 
     /**
+     * Get value
+     * @return value as bool
+     */
+    bool boolValue(void);
+
+    /**
      * is tag "publish"
-     * @return true if publish or false if subscribe
+     * @return true if publish 
      */
     bool isPublish();
 
     /**
      * is tag "subscribe"
-     * @return false if publish or true if subscribe
+     * @return true if subscribe
      */
     bool isSubscribe();
 
     /**
-     * Mark tag as "publish"
+     * Mark tag as "publish" (can be publish + subscribe)
      */
     void setPublish(void);
 
     /**
-     * Mark tag as "subscribe" (NOT publish)
+     * Mark tag as "subscribe" (can be publish + subscribe)
      */
     void setSubscribe(void);
 
+    /**
+     * Set tag type (see tag_type_t)
+     */
+    void setType(tag_type_t newType);
+
 private:
-    // All properties of this class are private
-    // Use setters & getters to access these values
+    /**
+     * All properties of this class are private
+     * Use setters & getters to access class members
+     */
     std::string topic;                  // storage for topic path
     uint16_t topicCRC;                  // CRC on topic path
     double topicDoubleValue;            // storage numeric value
     time_t lastUpdateTime;              // last update time (change of value)
-    void (*valueUpdate) (int,Tag*);     // callback for value update
+    void (*valueUpdate) (int,Tag*);     // callback function - will be called when value is updated
     int _valueUpdateID;                 // ID for value update
-    bool publish;                       // true = we publish, false = we subscribe
+    bool publish;                       // true = publish to topic when value changes
+    bool subscribe;                     // true = subscribe to this topic
+    tag_type_t type;
 };
 
 class TagStore {

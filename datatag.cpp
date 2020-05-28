@@ -110,7 +110,9 @@ Tag::Tag(const char *topicStr) {
     this->topic = topicStr;
     valueUpdate = NULL;
     _valueUpdateID = -1;
-    publish = false;        // subscribe tag
+    publish = false;
+    subscribe = false;
+    type = TAG_TYPE_NUMERIC;
     //cout << topic << endl;
     topicCRC = gen_crc16(topic.data(), topic.length());
     //cout << topicCRC << endl;
@@ -163,10 +165,21 @@ void Tag::setValue(int intValue) {
 }
 
 bool Tag::setValue(const char* strValue) {
-    float newValue;
-    int result = sscanf(strValue, "%f", &newValue);
+    float newValue; 
+    int result = 0;
+    switch (type) {
+        case TAG_TYPE_NUMERIC:
+            result = sscanf(strValue, "%f", &newValue);
+            break;
+        case TAG_TYPE_BOOL:
+            if ( (strValue[0] == 'f') || (strValue[0] == 'F') ) {
+                newValue = 0; result = 1; }
+            if ( (strValue[0] == 't') || (strValue[0] == 'T') ) {
+                newValue = 0; result = 1; }
+            break;
+    }
     if (result != 1) {
-        fprintf(stderr, "%s - failed to convert <%s> for topic %s\n", __func__, strValue, topic.c_str());
+        fprintf(stderr, "%s - failed to setValue <%s> for topic %s\n", __func__, strValue, topic.c_str());
         return false;
     }
     setValue(newValue);
@@ -185,12 +198,19 @@ int Tag::intValue(void) {
     return (int) topicDoubleValue;
 }
 
+bool Tag::boolValue(void) {
+    if (topicDoubleValue != 0) {
+        return true; }
+    else {
+        return false; }
+}
+
 bool Tag::isPublish() {
     return publish;
 }
 
 bool Tag::isSubscribe() {
-    return !publish;
+    return subscribe;
 }
 
 void Tag::setPublish(void) {
@@ -198,7 +218,11 @@ void Tag::setPublish(void) {
 }
 
 void Tag::setSubscribe(void) {
-    publish = false;
+    subscribe = true;
+}
+
+void Tag::setType(tag_type_t newType) {
+    type = newType;
 }
 
 //

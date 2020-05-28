@@ -1,6 +1,7 @@
 /**
  * @file homescr1.cpp
  *
+ * Author: Erwin Bejsta
  */
 
 /*********************
@@ -22,6 +23,7 @@
 #include <mosquitto.h>
 
 #include "mqtt.h"
+#include "topics.h"
 
 #include "lvgl.h"
 
@@ -34,9 +36,6 @@
 
 //#define MQTT_CONNECT_TIMEOUT 5      // seconds
 
-#define CPU_TEMP_TOPIC "binder/home/screen1/cpu/temp"
-#define ENV_TEMP_TOPIC "binder/home/screen1/env/temp"
-
 bool exitSignal = false;
 bool debugEnabled = false;
 bool runningAsDaemon = false;
@@ -48,8 +47,11 @@ std::string processName;
 
 
 extern char *info_label_text;
+
+/* Callback functions to update the display value  */
 extern void cpuTempUpdate(int x, Tag* t);
 extern void roomTempUpdate(int x, Tag* t);
+extern void shackHeaterStatusUpdate(int x, Tag* t);
 
 // Proto types
 void subscribe_tags(void);
@@ -130,21 +132,21 @@ void var_process(void) {
         var_process_time = now + VAR_PROCESS_INTERVAL;
 
         // update CPU temperature
-        Tag *tag = ts.getTag((char*) CPU_TEMP_TOPIC);
+        Tag *tag = ts.getTag((char*) TOPIC_CPU_TEMP);
         if (tag != NULL) {
             tag->setValue(hw.read_cpu_temp());
             if (mqtt.isConnected()) {
-              mqtt.publish(CPU_TEMP_TOPIC, "%.1f", tag->floatValue() );
+              mqtt.publish(TOPIC_CPU_TEMP, "%.1f", tag->floatValue() );
             }
         }
 
         // update environment temperature
-        tag = ts.getTag((const char*) ENV_TEMP_TOPIC);
+        tag = ts.getTag((const char*) TOPIC_ENV_TEMP);
         if (tag != NULL) {
             if (envTempSensor.readTempC(&fValue)) {
                 tag->setValue(fValue);
                 if (mqtt.isConnected()) {
-                    mqtt.publish(ENV_TEMP_TOPIC, "%.1f", tag->floatValue() );
+                    mqtt.publish(TOPIC_ENV_TEMP, "%.1f", tag->floatValue() );
                 }
             } else {
                 syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");
@@ -186,22 +188,30 @@ void init_values(void)
 void init_tags(void)
 {
     // CPU temp
-    Tag* tp = ts.addTag((char*) CPU_TEMP_TOPIC);
+    Tag* tp = ts.addTag((char*) TOPIC_CPU_TEMP);
     tp->setPublish();
     tp->registerCallback(&cpuTempUpdate, 15);   // update screen
 
     // Environment temperature is stored in index 0
-    tp = ts.addTag((char*) ENV_TEMP_TOPIC);
+    tp = ts.addTag((char*) TOPIC_ENV_TEMP);
     tp->setPublish();
     tp->registerCallback(&roomTempUpdate, 0);   // update screen
 
     // Shack Temp is stored in index 0
-    tp = ts.addTag((char*) "binder/home/shack/room/temp");
+    tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
+    tp->setSubscribe();
     tp->registerCallback(&roomTempUpdate, 1);
 
     // Bedroom 1 Temp
-    tp = ts.addTag((const char*) "binder/home/bed1/room/temp");
+    tp = ts.addTag((const char*) TOPIC_BED1_ROOM_TEMP);
+    tp->setSubscribe();
     tp->registerCallback(&roomTempUpdate, 2);
+
+    // Shack heater on/off
+    tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_ENABLE);
+    tp->setSubscribe();
+    tp->setType(TAG_TYPE_BOOL);
+    tp->registerCallback(&shackHeaterStatusUpdate, 1);
 
     // Testing only
     //ts.addTag((char*) "binder/home/screen1/room/temp");

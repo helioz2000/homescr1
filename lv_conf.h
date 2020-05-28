@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 
+
 /*====================
    Graphical settings
  *====================*/
@@ -484,7 +485,12 @@ typedef void * lv_font_user_data_t;
 #if LV_USE_USER_DATA
 /*Declare the type of the user data of object (can be e.g. `void *`, `int`, `struct`)*/
 //typedef void * lv_obj_user_data_t;
-typedef int lv_obj_user_data_t;
+//typedef int lv_obj_user_data_t;
+typedef struct {
+    int iVal;
+    void *pVal;
+    } lv_obj_user_data_t;
+
 /*Provide a function to free user data*/
 #define LV_USE_USER_DATA_FREE 0
 #if LV_USE_USER_DATA_FREE
@@ -586,7 +592,7 @@ typedef int lv_obj_user_data_t;
 /*LED (dependencies: -)*/
 #define LV_USE_LED      1
 #if LV_USE_LED
-#  define LV_LED_BRIGHT_MIN  120      /*Minimal brightness*/
+#  define LV_LED_BRIGHT_MIN  10      /*Minimal brightness*/
 #  define LV_LED_BRIGHT_MAX  255     /*Maximal brightness*/
 #endif
 

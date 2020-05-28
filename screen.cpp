@@ -54,6 +54,11 @@ lv_obj_t *tab3;
 lv_obj_t *tab4;
 lv_obj_t *chart;
 lv_obj_t *lv_cpuTemp;
+static lv_obj_t *shack_heater_led;
+
+// Common styles
+static lv_style_t style_led_green;
+static lv_style_t style_led_red;
 
 #define ROOM_TEMPS_MAX 5
 lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
@@ -95,6 +100,18 @@ void screen_init() {
     indev_drv.type = LV_INDEV_TYPE_POINTER;
     indev_drv.read_cb = evdev_read;
     lv_indev_drv_register(&indev_drv);
+    
+    /* Set common styles for screen objects*/
+    /* Green LED */
+    lv_style_init(&style_led_green);
+    lv_style_set_bg_color(&style_led_green, LV_STATE_DEFAULT, LV_COLOR_GREEN);
+    lv_style_set_shadow_color(&style_led_green, LV_STATE_DEFAULT, LV_COLOR_GREEN);
+    lv_style_set_border_color(&style_led_green, LV_STATE_DEFAULT, LV_COLOR_GREEN);
+    /* Red LED */
+    lv_style_init(&style_led_red);
+    lv_style_set_bg_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
+    lv_style_set_shadow_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
+    lv_style_set_border_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
 }
 
 /**
@@ -214,8 +231,15 @@ void roomTempUpdate(int x, Tag* t) {
     }
 }
 
-void coolheat_create(lv_obj_t *parent)
-{
+void shackHeaterStatusUpdate(int x, Tag *t) {
+    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+    if (t->boolValue()) {
+        lv_led_on(shack_heater_led);
+    } else {
+        lv_led_off(shack_heater_led);
+    }
+}
+void coolheat_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
@@ -226,9 +250,15 @@ void coolheat_create(lv_obj_t *parent)
     lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
     lv_page_set_scrlbar_mode(parent, LV_SCRLBAR_MODE_OFF);
 
-    lv_obj_t * label = lv_label_create(parent, NULL);
+    lv_obj_t *label = lv_label_create(parent, NULL);
     lv_label_set_text(label, "Test");
     lv_obj_align(label, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
+
+    shack_heater_led = lv_led_create(parent, NULL);
+    lv_obj_set_size(shack_heater_led, 20,20);
+    lv_obj_align(shack_heater_led, NULL, LV_ALIGN_IN_TOP_LEFT, 100, 20);
+    lv_obj_add_style(shack_heater_led, LV_LED_PART_MAIN, &style_led_green);
+    lv_led_off(shack_heater_led);
 
     // Draw building outline
     static lv_point_t line_points[] = {{0, 0}, {799, 0}, {799, 426}, {0, 426}, {0, 0}};
@@ -241,8 +271,7 @@ void coolheat_create(lv_obj_t *parent)
 
 }
 
-void heating_create(lv_obj_t *parent)
-{
+void heating_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
@@ -255,8 +284,7 @@ void heating_create(lv_obj_t *parent)
 
 }
 
-void temps_create(lv_obj_t *parent)
-{
+void temps_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
@@ -306,8 +334,7 @@ void temps_create(lv_obj_t *parent)
 
 }
 
-void settings_create(lv_obj_t *parent)
-{
+void settings_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
@@ -338,10 +365,10 @@ void settings_create(lv_obj_t *parent)
     // Add list elements
     lv_obj_t *btn = lv_list_add_btn(list1, LV_SYMBOL_LOOP, " Reboot");
 	lv_obj_set_event_cb(btn, pi_btn_action);
-    lv_obj_set_user_data(btn, (lv_obj_user_data_t)SCR_CMD_REBOOT);
+    lv_obj_set_user_data(btn, { SCR_CMD_REBOOT, NULL } );
     btn = lv_list_add_btn(list1, LV_SYMBOL_POWER, " Stop");
 	lv_obj_set_event_cb(btn, pi_btn_action);
-    lv_obj_set_user_data(btn, (lv_obj_user_data_t)SCR_CMD_SHUTDOWN);
+    lv_obj_set_user_data(btn, { SCR_CMD_SHUTDOWN, NULL } );
 
     // CPU Temperature
     lv_obj_t *obj1 = lv_obj_create(parent, NULL);
@@ -391,8 +418,7 @@ void settings_create(lv_obj_t *parent)
 
 
 // Not Used
-void __temps_create(lv_obj_t *parent)
-{
+void __temps_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
     lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
@@ -470,11 +496,10 @@ void __temps_create(lv_obj_t *parent)
 
 /**
  * Called when a new value on the slider on the Chart tab is set
- * @param slider pointer to the slider
- * @param event slider event
+ * @param obj: pointer to the slider object
+ * @param event: slider event
  */
-void slider_action(lv_obj_t *obj, lv_event_t event)
-{
+void slider_action(lv_obj_t *obj, lv_event_t event) {
     if (event == LV_EVENT_VALUE_CHANGED) {
         int16_t v = lv_slider_get_value(obj);
         v = 1000 * 100 / v; /* Convert to range modify values linearly */
@@ -484,11 +509,10 @@ void slider_action(lv_obj_t *obj, lv_event_t event)
 
 /**
  * Called when the brightness slider on the Settings tab is adjusted
- * @param obj pointer to slider object
- * @param event slider event
+ * @param obj: pointer to slider object
+ * @param event: slider event
  */
-void brightness_action(lv_obj_t *obj, lv_event_t event)
-{
+void brightness_action(lv_obj_t *obj, lv_event_t event) {
     if(event == LV_EVENT_VALUE_CHANGED) {
         int16_t v = lv_slider_get_value(obj);
         brightness_value = v;
@@ -498,13 +522,12 @@ void brightness_action(lv_obj_t *obj, lv_event_t event)
 
 /**
  * Called when the brightness slider on the Settings tab is adjusted
- * @param obj pointer to button object
- * @param event button event
+ * @param obj: pointer to button object
+ * @param event: button event
  */
-void pi_btn_action(lv_obj_t *obj, lv_event_t event)
-{
-    //lv_obj_user_data_t data;
-    if(event == LV_EVENT_VALUE_CHANGED) {
-        scr_cmd = (scr_cmd_t)lv_obj_get_user_data(obj); // button number = screen command
+void pi_btn_action(lv_obj_t *obj, lv_event_t event) {
+    if(event == LV_EVENT_CLICKED) {
+        scr_cmd = (scr_cmd_t)lv_obj_get_user_data(obj).iVal; // button number = screen command
+        //printf("Button pressed: %d \n", lv_obj_get_user_data(obj).iVal);
     }
 }

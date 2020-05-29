@@ -153,7 +153,7 @@ void MQTT::connect(void) {
         syslog(LOG_ERR, "mosquitto_connect failed: %s [%d]", strerror(result), result);
         throw runtime_error(strbuf);
     }
-    //printf ("%s\n", __func__);
+    //printf ("%s[%d] - %s\n", __FILE__, __LINE__, __func__);
 }
 
 void MQTT::disconnect(void) {
@@ -177,7 +177,7 @@ int MQTT::publish(const char* topic, const char* format, float value) {
         //printf ("%s: %s\n", __func__, topic);
     }
     sprintf(_pub_buf, format, value);
-    //printf ("%s: %s %s\n", __func__, topic, pub_buf);
+    //printf ("%s: %s %s\n", __func__, topic, _pub_buf);
     int result = mosquitto_publish(_mosq, &messageid, topic, strlen(_pub_buf), (const char *) _pub_buf, _qos, _retain);
     if (result != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "%s: %s [%s]\n", __func__, mosquitto_strerror(result), topic);

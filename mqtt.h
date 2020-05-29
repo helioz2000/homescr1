@@ -17,6 +17,10 @@
 
 #include <string>
 
+/* values to publish for binary state */
+#define MQTT_TRUE "true"
+#define MQTT_FALSE "false"
+
 class MQTT {
 public:
     // Constructor

@@ -76,16 +76,40 @@ public:
     const char* getTopic(void);
 
     /**
-     * Register a callback function to notify value changes
-     * @param updatePtr a pointer to the upadate function
+     * Set the format string
+     * @param formatStr: the format string
      */
-    void registerCallback(void (*updateCallback) (int,Tag*), int callBackID );
+    void setFormat(const char *formatStr);
 
     /**
-     * Set the value
-     * @return the callback ID set with registerCallback
+     * Get the format string
+     * @return the format string
+     */
+    const char* getFormat(void);
+
+    /**
+     * Register a callback function to notify value changes
+     * @param function ptr: a pointer to the update function
+     */
+    void registerUpdateCallback(void (*updateCallback) (int,Tag*), int callBackID );
+
+    /**
+     * Register a callback function to to publish tag
+     * @param function ptr: a pointer to the publish function
+     */
+    void registerPublishCallback(void (*publishCallback) (int,Tag*), int callBackID );
+
+    /**
+     * request value update callback ID
+     * @return the current value update callback ID set with registerCallback
      */
     int valueUpdateID();
+    
+    /**
+     * request publish tag callback ID
+     * @return the current publishTag ID
+     */
+    int publishTagID(void);
 
     void testCallback();
 
@@ -93,26 +117,33 @@ public:
      * Set the value
      * @param doubleValue: the new value
      */
-    void setValue(double doubleValue);
+    void setValue(double doubleValue, bool publishMe = false);
 
     /**
      * Set the value
      * @param floatValue: the new value
      */
-    void setValue(float floatValue);
+    void setValue(float floatValue, bool publishMe = false);
 
     /**
      * Set the value
      * @param intValue: the new value
      */
-    void setValue(int intValue);
+    void setValue(int intValue, bool publishMe = false);
+
+    /**
+     * Set the value
+     * @param boolValue: the new value
+     */
+    void setValue(bool boolValue, bool publishMe = false);
+
 
     /**
      * Set the value
      * @param strValue: new value as a string
      * @returns true on success
      */
-    bool setValue(const char* strValue);
+    bool setValue(const char* strValue, bool publishMe = false);
 
     /**
      * Get value
@@ -137,6 +168,12 @@ public:
      * @return value as bool
      */
     bool boolValue(void);
+
+    /**
+     * Get formatted value
+     * @return value as char *
+     */
+    //const char * formattedValue(void);
 
     /**
      * is tag "publish"
@@ -164,6 +201,11 @@ public:
      * Set tag type (see tag_type_t)
      */
     void setType(tag_type_t newType);
+    
+    /**
+     * Get tag type (see tag_type_t)
+     */
+    tag_type_t type(void);
 
 private:
     /**
@@ -171,14 +213,17 @@ private:
      * Use setters & getters to access class members
      */
     std::string topic;                  // storage for topic path
+    std::string format;                 // publishing format (eg %.1f)
     uint16_t topicCRC;                  // CRC on topic path
     double topicDoubleValue;            // storage numeric value
     time_t lastUpdateTime;              // last update time (change of value)
-    void (*valueUpdate) (int,Tag*);     // callback function - will be called when value is updated
-    int _valueUpdateID;                 // ID for value update
+    void (*valueUpdate) (int,Tag*);     // callback - called on external value update
+    void (*publishTag) (int,Tag*);      // callback - called to publish value
+    int _valueUpdateID;                 // ID for value update callback
+    int _publishTagID;                  // ID for tag publish callback
     bool publish;                       // true = publish to topic when value changes
     bool subscribe;                     // true = subscribe to this topic
-    tag_type_t type;
+    tag_type_t _type;
 };
 
 class TagStore {

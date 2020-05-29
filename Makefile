@@ -9,7 +9,11 @@ PREFIX = /local
 CC=gcc
 CXX=g++
 CFLAGS = -Wall -Wshadow -Wundef -Wmaybe-uninitialized
-CFLAGS += -O3 -g3 -I./
+#for debug
+CFLAGS += -O0 -g3
+# for production
+# CFLAGS += O3
+CFLAGS += -I./
 CXXFLAGS = $(CFLAGS)
 
 # directory for local libs

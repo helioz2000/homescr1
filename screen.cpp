@@ -23,6 +23,9 @@
 
 #include "screen.h"
 #include "datatag.h"
+#include "topics.h"
+
+extern TagStore ts;
 
 /**********************
  *   PRIVATE VARIABLES
@@ -43,10 +46,6 @@ char *info_label_text;
 int16_t brightness_value = 10;
 scr_cmd_t scr_cmd = SCR_CMD_NONE;
 
-void slider_action(lv_obj_t *obj, lv_event_t event);
-void brightness_action(lv_obj_t *obj, lv_event_t event);
-void pi_btn_action(lv_obj_t *obj, lv_event_t event);
-
 lv_obj_t *tv;
 lv_obj_t *tab1;
 lv_obj_t *tab2;
@@ -55,6 +54,7 @@ lv_obj_t *tab4;
 lv_obj_t *chart;
 lv_obj_t *lv_cpuTemp;
 static lv_obj_t *shack_heater_led;
+static lv_obj_t *shack_heater_switch;
 
 // Common styles
 static lv_style_t style_led_green;
@@ -72,6 +72,11 @@ void coolheat_create(lv_obj_t *parent);
 void heating_create(lv_obj_t *parent);
 void temps_create(lv_obj_t *parent);
 void settings_create(lv_obj_t *parent);
+
+void slider_action(lv_obj_t *obj, lv_event_t event);
+void brightness_action(lv_obj_t *obj, lv_event_t event);
+void pi_btn_action(lv_obj_t *obj, lv_event_t event);
+void shack_heater_switch_action(lv_obj_t *obj, lv_event_t event);
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -235,10 +240,13 @@ void shackHeaterStatusUpdate(int x, Tag *t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
         lv_led_on(shack_heater_led);
+        lv_switch_on(shack_heater_switch, LV_ANIM_ON);
     } else {
         lv_led_off(shack_heater_led);
+        lv_switch_off(shack_heater_switch, LV_ANIM_ON);
     }
 }
+
 void coolheat_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
@@ -251,14 +259,21 @@ void coolheat_create(lv_obj_t *parent) {
     lv_page_set_scrlbar_mode(parent, LV_SCRLBAR_MODE_OFF);
 
     lv_obj_t *label = lv_label_create(parent, NULL);
-    lv_label_set_text(label, "Test");
-    lv_obj_align(label, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
+    lv_label_set_text(label, "Shack");
+    lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_LEFT, 70, 70);
 
     shack_heater_led = lv_led_create(parent, NULL);
-    lv_obj_set_size(shack_heater_led, 20,20);
-    lv_obj_align(shack_heater_led, NULL, LV_ALIGN_IN_TOP_LEFT, 100, 20);
+    lv_obj_set_size(shack_heater_led, 30,30);
+    lv_obj_align(shack_heater_led, NULL, LV_ALIGN_IN_TOP_LEFT, 130, 25);
     lv_obj_add_style(shack_heater_led, LV_LED_PART_MAIN, &style_led_green);
     lv_led_off(shack_heater_led);
+
+    shack_heater_switch = lv_switch_create(parent, NULL);
+    lv_obj_set_size(shack_heater_switch, 80, 40);
+    lv_obj_align(shack_heater_switch, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
+    lv_obj_set_event_cb(shack_heater_switch, shack_heater_switch_action);
+    Tag *t = ts.getTag(TOPIC_SHACK_HEATER_ENABLE);
+    lv_obj_set_user_data(shack_heater_switch, { 0, t } );
 
     // Draw building outline
     static lv_point_t line_points[] = {{0, 0}, {799, 0}, {799, 426}, {0, 426}, {0, 0}};
@@ -492,6 +507,24 @@ void __temps_create(lv_obj_t *parent) {
     lv_slider_set_range(slider, 10, 1000);
     lv_slider_set_value(slider, 700, LV_ANIM_OFF);
     slider_action(slider, LV_EVENT_VALUE_CHANGED);	/*Simulate a user value set the refresh the chart*/
+}
+
+/**
+ * Called when the shack heater on/off switch is operated
+ * @param obj: pointer to the switch object
+ * @param event: switch event
+ */
+void shack_heater_switch_action(lv_obj_t *obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        bool newState = lv_switch_get_state(obj);
+        //printf("Shack heater switch State: %s\n", newState ? "On" : "Off");
+        Tag *t = (Tag*)lv_obj_get_user_data(obj).pVal;
+        if (t == NULL) {
+            fprintf(stderr, "%s[%d] - failed to retrieve tag\n", __FILE__, __LINE__);
+        } else {
+            t->setValue(newState, true);
+        }
+    }
 }
 
 /**

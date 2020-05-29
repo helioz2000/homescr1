@@ -57,6 +57,7 @@ extern void shackHeaterStatusUpdate(int x, Tag* t);
 void subscribe_tags(void);
 void mqtt_connection_status(bool status);
 void mqtt_topic_update(const char *topic, const char *value);
+void publishTag(int x, Tag* t);
 
 Hardware hw;
 TagStore ts;
@@ -121,12 +122,11 @@ void cmd_process(void)
 
 /*
  * Process local variables
- * Local variables get are process at a fixed time interval
+ * Local variables get are processed at a fixed time interval
  * The processing involves reading value from hardware and
  * publishing the value to MQTT broker
  */
 void var_process(void) {
-    float fValue;
     time_t now = time(NULL);
     if (now > var_process_time) {
         var_process_time = now + VAR_PROCESS_INTERVAL;
@@ -134,13 +134,13 @@ void var_process(void) {
         // update CPU temperature
         Tag *tag = ts.getTag((char*) TOPIC_CPU_TEMP);
         if (tag != NULL) {
-            tag->setValue(hw.read_cpu_temp());
-            if (mqtt.isConnected()) {
-              mqtt.publish(TOPIC_CPU_TEMP, "%.1f", tag->floatValue() );
-            }
+            tag->setValue(hw.read_cpu_temp(), true);
+            cpuTempUpdate(0, tag);      // update on screen
         }
 
+/* disabled - to check if it causes interference with touch screen pointer device
         // update environment temperature
+        float fValue;
         tag = ts.getTag((const char*) TOPIC_ENV_TEMP);
         if (tag != NULL) {
             if (envTempSensor.readTempC(&fValue)) {
@@ -152,6 +152,7 @@ void var_process(void) {
                 syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");
             }
         }
+        */
     }
 
     // reconnect mqtt if required
@@ -190,28 +191,32 @@ void init_tags(void)
     // CPU temp
     Tag* tp = ts.addTag((char*) TOPIC_CPU_TEMP);
     tp->setPublish();
-    tp->registerCallback(&cpuTempUpdate, 15);   // update screen
+    tp->setFormat("%.1f");
+    tp->registerUpdateCallback(&cpuTempUpdate, 15);   // update screen
+    tp->registerPublishCallback(&publishTag, 0);
 
     // Environment temperature is stored in index 0
     tp = ts.addTag((char*) TOPIC_ENV_TEMP);
     tp->setPublish();
-    tp->registerCallback(&roomTempUpdate, 0);   // update screen
+    tp->registerUpdateCallback(&roomTempUpdate, 0);   // update screen
 
     // Shack Temp is stored in index 0
     tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
     tp->setSubscribe();
-    tp->registerCallback(&roomTempUpdate, 1);
+    tp->registerUpdateCallback(&roomTempUpdate, 1);
 
     // Bedroom 1 Temp
     tp = ts.addTag((const char*) TOPIC_BED1_ROOM_TEMP);
     tp->setSubscribe();
-    tp->registerCallback(&roomTempUpdate, 2);
+    tp->registerUpdateCallback(&roomTempUpdate, 2);
 
     // Shack heater on/off
     tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_ENABLE);
     tp->setSubscribe();
+    tp->setPublish();
     tp->setType(TAG_TYPE_BOOL);
-    tp->registerCallback(&shackHeaterStatusUpdate, 1);
+    tp->registerUpdateCallback(&shackHeaterStatusUpdate, 1);
+    tp->registerPublishCallback(&publishTag, 0);
 
     // Testing only
     //ts.addTag((char*) "binder/home/screen1/room/temp");
@@ -299,6 +304,22 @@ void mqtt_topic_update(const char *topic, const char *value) {
 }
 
 /*
+ * callback function for data tags
+ * data tags notify when their value has been updated from an internal source
+ * and the updated value requires publishing to MQTT
+ */
+void publishTag(int x, Tag *t) {
+    if (mqtt.isConnected()) {
+        if (t->type() == TAG_TYPE_BOOL) {
+            //printf("%s - bool detected <%s>\n", __func__, t->getTopic());
+            mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0 );
+        } else {
+            mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue() );
+        }
+    }
+}
+
+/*
  * called on program exit
  */
 void exit_loop(void)
@@ -381,12 +402,13 @@ int main (int argc, char *argv[])
     }
 
     //mqtt.setConsoleLog(true);
-    init_tags();
-    init_mqtt();
-    init_values();
     usleep(100000);
+    // sequence is very important, functions rely on initialised data
     screen_init();
+    init_tags();
     screen_create();
+    init_values();
+    init_mqtt();
     main_loop();
     exit_loop();
     syslog(LOG_INFO, "exiting");

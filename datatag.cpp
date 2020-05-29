@@ -108,11 +108,14 @@ Tag::Tag(const char *topicStr) {
         throw invalid_argument("Class Tag - topic is NULL");
     }
     this->topic = topicStr;
+    this->format = "";
     valueUpdate = NULL;
     _valueUpdateID = -1;
+    publishTag = NULL;
+    _publishTagID = -1;
     publish = false;
     subscribe = false;
-    type = TAG_TYPE_NUMERIC;
+    _type = TAG_TYPE_NUMERIC;
     //cout << topic << endl;
     topicCRC = gen_crc16(topic.data(), topic.length());
     //cout << topicCRC << endl;
@@ -130,15 +133,37 @@ uint16_t Tag::getTopicCrc(void) {
     return topicCRC;
 }
 
-void Tag::registerCallback(void (*updateCallback) (int, Tag*), int callBackID) {
+void Tag::setFormat(const char *formatStr) {
+    this->format = formatStr;
+}
+
+const char* Tag::getFormat(void) {
+    return format.c_str();
+}
+
+/*
+const char* Tag::formattedValue(void) {
+        
+}
+*/
+void Tag::registerUpdateCallback(void (*updateCallback) (int, Tag*), int callBackID) {
     //printf("%s - 1\n", __func__);
     valueUpdate = updateCallback;
     _valueUpdateID = callBackID;
     //printf("%s - 2\n", __func__);
 }
 
+void Tag::registerPublishCallback(void (*publishCallback) (int, Tag*), int callBackID) {
+    publishTag = publishCallback;
+    _publishTagID = callBackID;
+}
+
 int Tag::valueUpdateID(void) {
     return _valueUpdateID;
+}
+
+int Tag::publishTagID(void) {
+    return _publishTagID;
 }
 
 void Tag::testCallback() {
@@ -147,27 +172,49 @@ void Tag::testCallback() {
     }
 }
 
-void Tag::setValue(double doubleValue) {
+/**
+ * this function is call in two separate and distinct cases:
+ * 1) when an update is received from and external source (eg mqtt broker)
+ * 2) when an update is received from internal source (eg local hardware or user interface)
+ * external updates need to be propagated to internal screen elements or 
+ * locally connected hardware.
+ * internal updates need to be propagated to external infrastructure (eg mqtt broker)
+ * NOTE: some tags can be publish and subscribe (i.e. read & write)
+ */
+void Tag::setValue(double doubleValue, bool publishMe) {
     topicDoubleValue = doubleValue;
     lastUpdateTime = time(NULL);
-    // call valueUpdate callback if it exists
-    if (valueUpdate != NULL) {
-        (*valueUpdate) (_valueUpdateID, this);
+    
+    // Publish new value if required 
+    if (publish && publishMe) {
+        //printf("%s[%d] - publishing <%s>\n", __FILE__, __LINE__, topic.c_str());
+        // call publishTag callback if it exists
+        if (publishTag != NULL) {
+            (*publishTag) (_publishTagID, this); }
+    } else {    // otherwise perform local value update
+        // call valueUpdate callback if it exists
+        if (valueUpdate != NULL) {
+            (*valueUpdate) (_valueUpdateID, this); }
     }
 }
 
-void Tag::setValue(float floatValue) {
-    setValue( (double) floatValue );
+void Tag::setValue(float floatValue, bool publishMe) {
+    setValue( (double) floatValue, publishMe );
 }
 
-void Tag::setValue(int intValue) {
-    setValue( (double) intValue );
+void Tag::setValue(int intValue, bool publishMe) {
+    setValue( (double) intValue, publishMe );
 }
 
-bool Tag::setValue(const char* strValue) {
+void Tag::setValue(bool boolValue, bool publishMe) {
+    setValue( (double) boolValue, publishMe );
+    //printf("%s[%d] - setValue <%s>\n", __FILE__, __LINE__, topic.c_str());
+}
+
+bool Tag::setValue(const char* strValue, bool publishMe) {
     float newValue; 
     int result = 0;
-    switch (type) {
+    switch (_type) {
         case TAG_TYPE_NUMERIC:
             result = sscanf(strValue, "%f", &newValue);
             break;
@@ -175,14 +222,14 @@ bool Tag::setValue(const char* strValue) {
             if ( (strValue[0] == 'f') || (strValue[0] == 'F') ) {
                 newValue = 0; result = 1; }
             if ( (strValue[0] == 't') || (strValue[0] == 'T') ) {
-                newValue = 0; result = 1; }
+                newValue = 1; result = 1; }
             break;
     }
     if (result != 1) {
         fprintf(stderr, "%s - failed to setValue <%s> for topic %s\n", __func__, strValue, topic.c_str());
         return false;
     }
-    setValue(newValue);
+    setValue(newValue, publishMe);
     return true;
 }
 
@@ -222,9 +269,12 @@ void Tag::setSubscribe(void) {
 }
 
 void Tag::setType(tag_type_t newType) {
-    type = newType;
+    _type = newType;
 }
 
+tag_type_t Tag::type(void) {
+    return _type;
+}
 //
 // Class TagStore
 //

@@ -3,3 +3,5 @@ git.txt
 .DS_Store
 homescr1
 *.o
+.cproject
+.project

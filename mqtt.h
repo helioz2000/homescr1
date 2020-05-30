@@ -105,9 +105,10 @@ public:
      * @param topic: the topic name to be published
      * @param format: printf style format string
      * @param value: the numeric value to publish
+     @ @param msg_retain: true is broker is to retain message value through shutdown
      * @return: message ID, can be used for further tracking
      */
-    int publish(const char* topic, const char* format, float value);
+    int publish(const char* topic, const char* format, float value, bool msg_retain = false);
 
     /**
      * subscribe to a topic
@@ -157,7 +158,6 @@ private:
     bool _console_log_enable;    // for mosqitto logging
 
     int _qos;        // quality of service [0..2]
-    bool _retain;    // reained message (last known value)
 };
 
 #endif /* HARDWARE_H */

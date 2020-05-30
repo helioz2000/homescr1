@@ -198,6 +198,16 @@ public:
     void setSubscribe(void);
 
     /**
+     * Set tag retain for publishing
+     */
+    void setRetain(bool newRetain);
+
+    /**
+     * Get tag retain setting
+     */
+    bool getRetain(void);
+
+    /**
      * Set tag type (see tag_type_t)
      */
     void setType(tag_type_t newType);
@@ -217,13 +227,14 @@ private:
     uint16_t topicCRC;                  // CRC on topic path
     double topicDoubleValue;            // storage numeric value
     time_t lastUpdateTime;              // last update time (change of value)
-    void (*valueUpdate) (int,Tag*);     // callback - called on external value update
-    void (*publishTag) (int,Tag*);      // callback - called to publish value
+    void (*_valueUpdateCB) (int,Tag*);   // callback - called on external value update
+    void (*_publishTagCB) (int,Tag*);    // callback - called to publish value
     int _valueUpdateID;                 // ID for value update callback
     int _publishTagID;                  // ID for tag publish callback
     bool publish;                       // true = publish to topic when value changes
     bool subscribe;                     // true = subscribe to this topic
-    tag_type_t _type;
+    bool _retain;                       // retain option sent to broker on publish 
+    tag_type_t _type;                   // data type
 };
 
 class TagStore {

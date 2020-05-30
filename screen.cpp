@@ -53,12 +53,21 @@ lv_obj_t *tab3;
 lv_obj_t *tab4;
 lv_obj_t *chart;
 lv_obj_t *lv_cpuTemp;
+static lv_obj_t *shack_temp_label;
 static lv_obj_t *shack_heater_led;
 static lv_obj_t *shack_heater_switch;
+static lv_obj_t *shack_heater_slider;
+static lv_obj_t *shack_heater_temp_sp_label;
+static lv_obj_t *shack_heater_container;
 
 // Common styles
 static lv_style_t style_led_green;
 static lv_style_t style_led_red;
+static lv_style_t style_font20;
+static lv_style_t style_font24;
+static lv_style_t style_font28;
+static lv_style_t style_font32;
+static lv_style_t style_box;
 
 #define ROOM_TEMPS_MAX 5
 lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
@@ -77,6 +86,7 @@ void slider_action(lv_obj_t *obj, lv_event_t event);
 void brightness_action(lv_obj_t *obj, lv_event_t event);
 void pi_btn_action(lv_obj_t *obj, lv_event_t event);
 void shack_heater_switch_action(lv_obj_t *obj, lv_event_t event);
+void shack_heater_slider_action(lv_obj_t *obj, lv_event_t event);
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -117,6 +127,29 @@ void screen_init() {
     lv_style_set_bg_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
     lv_style_set_shadow_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
     lv_style_set_border_color(&style_led_red, LV_STATE_DEFAULT, LV_COLOR_RED);
+    
+    /* Font size 20 */
+    lv_style_init(&style_font20);
+    lv_style_set_text_font(&style_font20, LV_STATE_DEFAULT, &lv_font_montserrat_20);
+    
+    /* Font size 24 */
+    lv_style_init(&style_font24);
+    lv_style_set_text_font(&style_font24, LV_STATE_DEFAULT, &lv_font_montserrat_24);
+
+    /* Font size 28 */
+    lv_style_init(&style_font28);
+    lv_style_set_text_font(&style_font28, LV_STATE_DEFAULT, &lv_font_montserrat_28);
+
+    /* Font size 32 */
+    lv_style_init(&style_font32);
+    lv_style_set_text_font(&style_font32, LV_STATE_DEFAULT, &lv_font_montserrat_32);
+
+    /* for container box */
+    lv_style_init(&style_box);
+    lv_style_set_value_align(&style_box, LV_STATE_DEFAULT, LV_ALIGN_OUT_TOP_LEFT);
+    lv_style_set_value_ofs_y(&style_box, LV_STATE_DEFAULT, - LV_DPX(10));
+    lv_style_set_margin_top(&style_box, LV_STATE_DEFAULT, LV_DPX(30));
+
 }
 
 /**
@@ -234,46 +267,96 @@ void roomTempUpdate(int x, Tag* t) {
         lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
         //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     }
+    // secondary updates
+    switch (t->valueUpdateID()) {
+        case 1: 
+            snprintf(buffer, sizeof(buffer), t->getFormat(), t->floatValue());
+            lv_label_set_text(shack_temp_label, buffer);
+            break;
+        default:
+            break;
+    }
 }
 
-void shackHeaterStatusUpdate(int x, Tag *t) {
+void shackHeaterSwitchUpdate(int x, Tag *t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_led_on(shack_heater_led);
         lv_switch_on(shack_heater_switch, LV_ANIM_ON);
     } else {
-        lv_led_off(shack_heater_led);
         lv_switch_off(shack_heater_switch, LV_ANIM_ON);
     }
 }
 
+void shackHeaterLedUpdate(int x, Tag *t) {
+    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
+    if (t->boolValue()) {
+        lv_led_on(shack_heater_led);
+    } else {
+        lv_led_off(shack_heater_led);
+    }
+}
+
+void shackHeaterSliderUpdate(int x, Tag* t) {
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), t->getFormat(), t->floatValue());
+    // prepare value for slider
+    float f = t->floatValue() * 10;
+    lv_slider_set_value(shack_heater_slider, f, LV_ANIM_ON);
+    lv_label_set_text(shack_heater_temp_sp_label, buffer);
+
+}
+
 void coolheat_create(lv_obj_t *parent) {
-/*
-    lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
-    lv_page_set_style(parent, LV_PAGE_STYLE_SCRL, &lv_style_transp_fit);
-*/
 
 // page setup
     lv_page_set_scrllable_fit(parent, LV_FIT_PARENT);	// defined in lv_cont.h
     lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
     lv_page_set_scrlbar_mode(parent, LV_SCRLBAR_MODE_OFF);
 
-    lv_obj_t *label = lv_label_create(parent, NULL);
-    lv_label_set_text(label, "Shack");
-    lv_obj_align(label, NULL, LV_ALIGN_IN_TOP_LEFT, 70, 70);
+    // Container for shack heater controls
+    shack_heater_container = lv_cont_create(parent, NULL);
+    lv_obj_set_auto_realign(shack_heater_container, false); 
+    lv_obj_set_size(shack_heater_container, LV_DPI *1.8, lv_obj_get_height(parent) * 0.9);
+    lv_obj_align(shack_heater_container, NULL, LV_ALIGN_IN_BOTTOM_LEFT, 10, -10);
+    // Container box label as per style_box
+    lv_obj_add_style(shack_heater_container, LV_CONT_PART_MAIN, &style_box);
+    lv_obj_set_style_local_value_str(shack_heater_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "Shack");
 
-    shack_heater_led = lv_led_create(parent, NULL);
+    // Shack temperature display
+    shack_temp_label = lv_label_create(parent, NULL);
+    lv_label_set_text(shack_temp_label, "99.9");
+    lv_obj_align(shack_temp_label, shack_heater_container, LV_ALIGN_OUT_TOP_RIGHT, 0, -5);
+
+    // Switch to turn heater on
+    shack_heater_switch = lv_switch_create(shack_heater_container, NULL);
+    lv_obj_set_size(shack_heater_switch, 80, 40);
+    lv_obj_align(shack_heater_switch, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 10);
+    lv_obj_set_event_cb(shack_heater_switch, shack_heater_switch_action);
+    Tag *t1 = ts.getTag(TOPIC_SHACK_HEATER_ENABLE);
+    lv_obj_set_user_data(shack_heater_switch, { 0, t1 } );
+    
+    // LED to indicate when thermostat is calling for heater
+    shack_heater_led = lv_led_create(shack_heater_container, NULL);
     lv_obj_set_size(shack_heater_led, 30,30);
-    lv_obj_align(shack_heater_led, NULL, LV_ALIGN_IN_TOP_LEFT, 130, 25);
+    lv_obj_align(shack_heater_led, shack_heater_switch, LV_ALIGN_OUT_RIGHT_MID, 25, 0);
     lv_obj_add_style(shack_heater_led, LV_LED_PART_MAIN, &style_led_green);
     lv_led_off(shack_heater_led);
 
-    shack_heater_switch = lv_switch_create(parent, NULL);
-    lv_obj_set_size(shack_heater_switch, 80, 40);
-    lv_obj_align(shack_heater_switch, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
-    lv_obj_set_event_cb(shack_heater_switch, shack_heater_switch_action);
-    Tag *t = ts.getTag(TOPIC_SHACK_HEATER_ENABLE);
-    lv_obj_set_user_data(shack_heater_switch, { 0, t } );
+    // Shack heater temp setpoint slider
+    shack_heater_slider = lv_slider_create(shack_heater_container, NULL);
+    lv_obj_set_size(shack_heater_slider, LV_DPI / 3, lv_obj_get_height(parent) * 0.65);
+    lv_obj_align(shack_heater_slider, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, -15);
+    lv_obj_set_event_cb(shack_heater_slider, shack_heater_slider_action);
+    lv_slider_set_range(shack_heater_slider, 100, 280);     // 10 to 30 deg
+    //lv_slider_set_value(shack_heater_slider, 20, LV_ANIM_OFF);
+    Tag *t2 = ts.getTag(TOPIC_SHACK_HEATER_TEMP_SP);
+    lv_obj_set_user_data(shack_heater_slider, { 0, t2 } );
+    // setpoint value display above slider
+    shack_heater_temp_sp_label = lv_label_create(shack_heater_container, NULL);
+    lv_obj_add_style(shack_heater_temp_sp_label, LV_LABEL_PART_MAIN, &style_font24);
+    //lv_obj_set_height(shack_heater_temp_sp_label, 50);
+    lv_label_set_text(shack_heater_temp_sp_label, "---");
+    lv_obj_align(shack_heater_temp_sp_label, shack_heater_slider, LV_ALIGN_OUT_TOP_MID, -3, -5);
 
     // Draw building outline
     static lv_point_t line_points[] = {{0, 0}, {799, 0}, {799, 426}, {0, 426}, {0, 0}};
@@ -328,7 +411,6 @@ void temps_create(lv_obj_t *parent) {
     lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
     lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
 
-
     // Shack Temperature
     lv_obj_t *obj1 = lv_obj_create(parent, NULL);
     lv_obj_set_size(obj1, 150, 40);
@@ -362,8 +444,8 @@ void settings_create(lv_obj_t *parent) {
 
     // Create brightness slider
     lv_obj_t *slider = lv_slider_create(parent, NULL);
-    lv_obj_set_size(slider, LV_DPI / 3, lv_obj_get_height(parent) * 0.8);
-    lv_obj_align(slider, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -40, -20);
+    lv_obj_set_size(slider, LV_DPI / 4, lv_obj_get_height(parent) * 0.7);
+    lv_obj_align(slider, NULL, LV_ALIGN_IN_BOTTOM_RIGHT, -40, -30);
     lv_obj_set_event_cb(slider, brightness_action);
     lv_slider_set_range(slider, 10, 200);
     lv_slider_set_value(slider, brightness_value, LV_ANIM_OFF);
@@ -537,6 +619,32 @@ void slider_action(lv_obj_t *obj, lv_event_t event) {
         int16_t v = lv_slider_get_value(obj);
         v = 1000 * 100 / v; /* Convert to range modify values linearly */
         lv_chart_set_range(chart, 0, v);
+    }
+}
+
+/**
+ * Called when shack heater temp setpoint is adjusted
+ * @param obj: pointer to the slider object
+ * @param event: slider event
+ */
+void shack_heater_slider_action(lv_obj_t *obj, lv_event_t event) {
+    int16_t v = lv_slider_get_value(obj);
+    float f = (float)v / 10.0; /* into deg C */
+    Tag *t = (Tag*)lv_obj_get_user_data(obj).pVal;
+    if (t==NULL) return;
+    static char buf[20];
+    // on value change upate the display
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        //printf("%s[%d] - slider event: %d\n", __FILE__, __LINE__, v);
+        snprintf(buf, 20, t->getFormat(), f);
+        lv_label_set_text(shack_heater_temp_sp_label, buf);
+        
+    }
+    // on release publish new value
+    if (event == LV_EVENT_RELEASED) {
+        //printf("%s[%d] - slider released: %d\n", __FILE__, __LINE__, v);
+        //printf("%s[%d] - float value: %f\n", __FILE__, __LINE__, f);
+        t->setValue(f, true);
     }
 }
 

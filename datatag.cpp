@@ -109,12 +109,13 @@ Tag::Tag(const char *topicStr) {
     }
     this->topic = topicStr;
     this->format = "";
-    valueUpdate = NULL;
+    _valueUpdateCB = NULL;
     _valueUpdateID = -1;
-    publishTag = NULL;
+    _publishTagCB = NULL;
     _publishTagID = -1;
     publish = false;
     subscribe = false;
+    _retain = false;
     _type = TAG_TYPE_NUMERIC;
     //cout << topic << endl;
     topicCRC = gen_crc16(topic.data(), topic.length());
@@ -148,13 +149,13 @@ const char* Tag::formattedValue(void) {
 */
 void Tag::registerUpdateCallback(void (*updateCallback) (int, Tag*), int callBackID) {
     //printf("%s - 1\n", __func__);
-    valueUpdate = updateCallback;
+    _valueUpdateCB = updateCallback;
     _valueUpdateID = callBackID;
     //printf("%s - 2\n", __func__);
 }
 
 void Tag::registerPublishCallback(void (*publishCallback) (int, Tag*), int callBackID) {
-    publishTag = publishCallback;
+    _publishTagCB = publishCallback;
     _publishTagID = callBackID;
 }
 
@@ -167,8 +168,8 @@ int Tag::publishTagID(void) {
 }
 
 void Tag::testCallback() {
-    if (valueUpdate != NULL) {
-        (*valueUpdate) (_valueUpdateID, this);
+    if (_valueUpdateCB != NULL) {
+        (*_valueUpdateCB) (_valueUpdateID, this);
     }
 }
 
@@ -189,12 +190,12 @@ void Tag::setValue(double doubleValue, bool publishMe) {
     if (publish && publishMe) {
         //printf("%s[%d] - publishing <%s>\n", __FILE__, __LINE__, topic.c_str());
         // call publishTag callback if it exists
-        if (publishTag != NULL) {
-            (*publishTag) (_publishTagID, this); }
+        if (_publishTagCB != NULL) {
+            (*_publishTagCB) (_publishTagID, this); }
     } else {    // otherwise perform local value update
         // call valueUpdate callback if it exists
-        if (valueUpdate != NULL) {
-            (*valueUpdate) (_valueUpdateID, this); }
+        if (_valueUpdateCB != NULL) {
+            (*_valueUpdateCB) (_valueUpdateID, this); }
     }
 }
 
@@ -266,6 +267,14 @@ void Tag::setPublish(void) {
 
 void Tag::setSubscribe(void) {
     subscribe = true;
+}
+
+void Tag::setRetain(bool newRetain) {
+    _retain = newRetain;
+}
+
+bool Tag::getRetain(void) {
+    return _retain;
 }
 
 void Tag::setType(tag_type_t newType) {

@@ -32,7 +32,6 @@
 #define MQTT_BROKER_DEFAULT "192.168.0.124"
 #define MQTT_BROKER_DEFAULT_PORT 1883
 #define MQTT_BROKER_DEFAULT_KEEPALIVE 60
-#define MQTT_RETAIN_DEFAULT false
 
 using namespace std;
 
@@ -92,7 +91,6 @@ static void on_subscribe(struct mosquitto *mosq, void *obj, int mid, int qos_cou
      _connected = false;
      _console_log_enable = false;
      _qos = 0;
-     _retain = MQTT_RETAIN_DEFAULT;
      connectionStatusCallback = NULL;
      topicUpdateCallback = NULL;
      _mqttServer = MQTT_BROKER_DEFAULT;
@@ -168,7 +166,7 @@ void MQTT::registerTopicUpdateCallback(void (*callback) (const char*, const char
     topicUpdateCallback = callback;
 }
 
-int MQTT::publish(const char* topic, const char* format, float value) {
+int MQTT::publish(const char* topic, const char* format, float value, bool msg_retain) {
     int messageid = 0;
     if (!_connected) {
         fprintf(stderr, "%s: Not Connected!\n", __func__);
@@ -178,7 +176,7 @@ int MQTT::publish(const char* topic, const char* format, float value) {
     }
     sprintf(_pub_buf, format, value);
     //printf ("%s: %s %s\n", __func__, topic, _pub_buf);
-    int result = mosquitto_publish(_mosq, &messageid, topic, strlen(_pub_buf), (const char *) _pub_buf, _qos, _retain);
+    int result = mosquitto_publish(_mosq, &messageid, topic, strlen(_pub_buf), (const char *) _pub_buf, _qos, msg_retain);
     if (result != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "%s: %s [%s]\n", __func__, mosquitto_strerror(result), topic);
     }

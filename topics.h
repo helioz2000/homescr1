@@ -13,3 +13,5 @@
 #define TOPIC_BED1_ROOM_TEMP "binder/home/bed1/room/temp"
 #define TOPIC_SHACK_HEATER_ENABLE "binder/home/shack/heater/enable"
 #define TOPIC_SHACK_ROOM_TEMP "binder/home/shack/room/temp"
+#define TOPIC_SHACK_HEATER_TEMP_SP "binder/home/shack/heater/temp_sp"
+#define TOPIC_SHACK_HEATER_CONTROL "binder/home/shack/heater/control"

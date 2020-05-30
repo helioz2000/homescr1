@@ -51,13 +51,16 @@ extern char *info_label_text;
 /* Callback functions to update the display value  */
 extern void cpuTempUpdate(int x, Tag* t);
 extern void roomTempUpdate(int x, Tag* t);
-extern void shackHeaterStatusUpdate(int x, Tag* t);
+extern void shackHeaterSwitchUpdate(int x, Tag* t);
+extern void shackHeaterSliderUpdate(int x, Tag* t);
+extern void shackHeaterLedUpdate(int x, Tag* t);
+
 
 // Proto types
 void subscribe_tags(void);
 void mqtt_connection_status(bool status);
 void mqtt_topic_update(const char *topic, const char *value);
-void publishTag(int x, Tag* t);
+void mqtt_publish_tag(int x, Tag* t);
 
 Hardware hw;
 TagStore ts;
@@ -193,7 +196,7 @@ void init_tags(void)
     tp->setPublish();
     tp->setFormat("%.1f");
     tp->registerUpdateCallback(&cpuTempUpdate, 15);   // update screen
-    tp->registerPublishCallback(&publishTag, 0);
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
     // Environment temperature is stored in index 0
     tp = ts.addTag((char*) TOPIC_ENV_TEMP);
@@ -203,6 +206,7 @@ void init_tags(void)
     // Shack Temp is stored in index 0
     tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
     tp->setSubscribe();
+    tp->setFormat("%.1f");
     tp->registerUpdateCallback(&roomTempUpdate, 1);
 
     // Bedroom 1 Temp
@@ -214,14 +218,27 @@ void init_tags(void)
     tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_ENABLE);
     tp->setSubscribe();
     tp->setPublish();
+    tp->setRetain(true);    // needs to be retained during broker reboot
     tp->setType(TAG_TYPE_BOOL);
-    tp->registerUpdateCallback(&shackHeaterStatusUpdate, 1);
-    tp->registerPublishCallback(&publishTag, 0);
+    tp->registerUpdateCallback(&shackHeaterSwitchUpdate, 0);
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
-    // Testing only
-    //ts.addTag((char*) "binder/home/screen1/room/temp");
-    //ts.addTag((char*) "binder/home/screen1/room/hum");
-    // = ts.getTag((char*) "binder/home/screen1/room/temp");
+    // Shack heater temp setpoint
+    tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_TEMP_SP);
+    tp->setSubscribe();
+    tp->setPublish();
+    tp->setRetain(true);    // needs to be retained during broker reboot
+    tp->setFormat("%.1f");
+    tp->registerUpdateCallback(&shackHeaterSliderUpdate, 0);
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
+
+    // Shack heater on/off control
+    tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_CONTROL);
+    tp->setSubscribe();
+    tp->setType(TAG_TYPE_BOOL);
+    tp->registerUpdateCallback(&shackHeaterLedUpdate, 0);
+
+
 }
 
 void mqtt_connect(void) {
@@ -308,13 +325,14 @@ void mqtt_topic_update(const char *topic, const char *value) {
  * data tags notify when their value has been updated from an internal source
  * and the updated value requires publishing to MQTT
  */
-void publishTag(int x, Tag *t) {
+void mqtt_publish_tag(int x, Tag *t) {
     if (mqtt.isConnected()) {
+        //printf("%s[%d] - publishing %s\n", __FILE__,__LINE__, t->getTopic());
         if (t->type() == TAG_TYPE_BOOL) {
             //printf("%s - bool detected <%s>\n", __func__, t->getTopic());
-            mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0 );
+            mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0, t->getRetain() );
         } else {
-            mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue() );
+            mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue(), t->getRetain() );
         }
     }
 }
@@ -406,8 +424,8 @@ int main (int argc, char *argv[])
     // sequence is very important, functions rely on initialised data
     screen_init();
     init_tags();
-    screen_create();
     init_values();
+    screen_create();
     init_mqtt();
     main_loop();
     exit_loop();

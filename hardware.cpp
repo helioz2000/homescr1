@@ -28,7 +28,7 @@
 #define OS_NAME_PATH "/etc/os-release"
 #define MODEL_NAME_PATH "/proc/device-tree/model"
 #define TOUCH_INPUT_PATH "/dev/input/event0"
-#define SCREEN_SAVER_TIME 8      // in s
+#define SCREEN_SAVER_TIME 30      // in s
 
 int touch_fd = -1;
 time_t screen_timout;

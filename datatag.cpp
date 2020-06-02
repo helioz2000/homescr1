@@ -108,7 +108,10 @@ Tag::Tag(const char *topicStr) {
         throw invalid_argument("Class Tag - topic is NULL");
     }
     this->topic = topicStr;
-    this->format = "";
+    this->_format = "";
+	this->_noreadStr = "";
+	_noreadStatus = false;
+	_noreadValue = 0.0;
     _valueUpdateCB = NULL;
     _valueUpdateID = -1;
     _publishTagCB = NULL;
@@ -135,18 +138,48 @@ uint16_t Tag::getTopicCrc(void) {
 }
 
 void Tag::setFormat(const char *formatStr) {
-    this->format = formatStr;
+    this->_format = formatStr;
 }
 
 const char* Tag::getFormat(void) {
-    return format.c_str();
+    return _format.c_str();
 }
 
-/*
-const char* Tag::formattedValue(void) {
-        
+void Tag::setNoreadStr(const char *noreadStr) {
+	this->_noreadStr = noreadStr;
 }
-*/
+
+const char* Tag::getNoreadStr(void) {
+	return _noreadStr.c_str();
+}
+
+void Tag::setNoreadValue(float newValue) {
+	this->_noreadValue = newValue;
+}
+
+float Tag::getNoreadValue(void) {
+	return _noreadValue;
+}
+
+bool Tag::getFormattedValueStr(char *buffer, int buflen, const char *formatStr) {
+	int result = 0;
+	if(_noreadStatus) {
+		if(formatStr) {
+			result = snprintf(buffer, buflen, formatStr, _noreadValue);
+		} else {
+			result = snprintf(buffer, buflen, _noreadStr.c_str());
+		}
+	} else {
+		if(formatStr) {
+			result = snprintf(buffer, buflen, formatStr, this->floatValue());
+		} else {
+			result = snprintf(buffer, buflen, _format.c_str(), this->floatValue());
+		}
+	}
+	if (result > 0) return true;
+	else return false;
+}
+
 void Tag::registerUpdateCallback(void (*updateCallback) (int, Tag*), int callBackID) {
     //printf("%s - 1\n", __func__);
     _valueUpdateCB = updateCallback;
@@ -174,7 +207,7 @@ void Tag::testCallback() {
 }
 
 /**
- * this function is call in two separate and distinct cases:
+ * this function is called in two separate and distinct cases:
  * 1) when an update is received from and external source (eg mqtt broker)
  * 2) when an update is received from internal source (eg local hardware or user interface)
  * external updates need to be propagated to internal screen elements or 
@@ -212,24 +245,36 @@ void Tag::setValue(bool boolValue, bool publishMe) {
     //printf("%s[%d] - setValue <%s>\n", __FILE__, __LINE__, topic.c_str());
 }
 
+/**
+ * Note: strValue can be NULL when MQTT clears a retained message
+ */
+
 bool Tag::setValue(const char* strValue, bool publishMe) {
-    float newValue; 
-    int result = 0;
-    switch (_type) {
-        case TAG_TYPE_NUMERIC:
-            result = sscanf(strValue, "%f", &newValue);
-            break;
-        case TAG_TYPE_BOOL:
-            if ( (strValue[0] == 'f') || (strValue[0] == 'F') ) {
-                newValue = 0; result = 1; }
-            if ( (strValue[0] == 't') || (strValue[0] == 'T') ) {
-                newValue = 1; result = 1; }
-            break;
-    }
-    if (result != 1) {
-        fprintf(stderr, "%s - failed to setValue <%s> for topic %s\n", __func__, strValue, topic.c_str());
-        return false;
-    }
+	float newValue = 0;
+	int result = 0;
+	// handle "noread" (or clear value) case?
+	if (strValue == NULL) {
+		newValue = _noreadValue;
+		_noreadStatus = true;
+		result = 1;
+	} else {
+		switch (_type) {
+			case TAG_TYPE_NUMERIC:
+				result = sscanf(strValue, "%f", &newValue);
+				break;
+			case TAG_TYPE_BOOL:
+				if ( (strValue[0] == 'f') || (strValue[0] == 'F') ) {
+					newValue = 0; result = 1; }
+				if ( (strValue[0] == 't') || (strValue[0] == 'T') ) {
+					newValue = 1; result = 1; }
+				break;
+		}
+		_noreadStatus = false;
+	}
+	if (result != 1) {
+		fprintf(stderr, "%s - failed to setValue <%s> for topic %s\n", __func__, strValue, topic.c_str());
+		return false;
+	}
     setValue(newValue, publishMe);
     return true;
 }
@@ -251,6 +296,14 @@ bool Tag::boolValue(void) {
         return true; }
     else {
         return false; }
+}
+
+void Tag::setNoreadStatus(bool newStatus) {
+	_noreadStatus = newStatus;
+}
+
+bool Tag::getNoreadStatus(void) {
+	return _noreadStatus;
 }
 
 bool Tag::isPublish() {

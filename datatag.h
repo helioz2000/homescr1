@@ -87,6 +87,39 @@ public:
      */
     const char* getFormat(void);
 
+	/**
+ 	* Set the noread string
+ 	* @param noreadStr: the format string
+ 	*/
+ 	void setNoreadStr(const char *noreadStr);
+ 
+ 	/**
+ 	* Get the noread string
+ 	* @return the noread string
+ 	*/
+ 	const char* getNoreadStr(void);
+
+	/**
+	 * Set noread value
+	 * @param newValue: the new noread value
+	 */
+	void setNoreadValue(float newValue);
+
+	/**
+	 * get noread value
+	 * @returns: the noread value float
+	 */
+	float getNoreadValue(void);
+
+	/**
+	 * get formatted value string
+	 * @param buffer: char buffer for formatted string
+	 * @param buflen: length of buffer in bytes
+	 * @param formatStr: printf format string, if NULL the object's format string is used
+	 * @returns: true on success
+	 */
+	bool getFormattedValueStr(char *buffer, int buflen, const char *formatStr);
+
     /**
      * Register a callback function to notify value changes
      * @param function ptr: a pointer to the update function
@@ -175,6 +208,18 @@ public:
      */
     //const char * formattedValue(void);
 
+	/**
+	 * set noread status
+	 * @para newStatus: the new noread status
+	 */
+	void setNoreadStatus(bool newStatus);
+
+	/**
+	 * get noread status
+	 * returns: teh current noread status
+	 */
+	bool getNoreadStatus(void);
+
     /**
      * is tag "publish"
      * @return true if publish 
@@ -223,14 +268,17 @@ private:
      * Use setters & getters to access class members
      */
     std::string topic;                  // storage for topic path
-    std::string format;                 // publishing format (eg %.1f)
+    std::string _format;                 // publishing format (eg %.1f)
+	std::string _noreadStr;				// display this when value is not available
     uint16_t topicCRC;                  // CRC on topic path
+	float _noreadValue;					// Value to be used when noread is active
     double topicDoubleValue;            // storage numeric value
     time_t lastUpdateTime;              // last update time (change of value)
-    void (*_valueUpdateCB) (int,Tag*);   // callback - called on external value update
-    void (*_publishTagCB) (int,Tag*);    // callback - called to publish value
+    void (*_valueUpdateCB) (int,Tag*);	// callback - called on external value update
+    void (*_publishTagCB) (int,Tag*);	// callback - called to publish value
     int _valueUpdateID;                 // ID for value update callback
     int _publishTagID;                  // ID for tag publish callback
+	bool _noreadStatus;					// true = value not available or invalid
     bool publish;                       // true = publish to topic when value changes
     bool subscribe;                     // true = subscribe to this topic
     bool _retain;                       // retain option sent to broker on publish 

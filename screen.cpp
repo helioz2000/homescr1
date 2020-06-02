@@ -72,7 +72,7 @@ static lv_style_t style_box;
 #define ROOM_TEMPS_MAX 5
 lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
 
-const char* roomTempFormat[ROOM_TEMPS_MAX] = { "This %.1f°C", "Shack %.1f°C", "Bed1 %.1f°C", NULL, NULL };
+const char* roomTempFormat[ROOM_TEMPS_MAX] = { "This %s°C", "Shack %s°C", "Bed1 %s°C", NULL, NULL };
 
 /**********************
  *   PRIVATE PROTOTYPES
@@ -254,25 +254,32 @@ void screen_exit(void) {
 void cpuTempUpdate(int x, Tag* t) {
     char buffer[20];
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
+	//snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
+	t->getFormattedValueStr(&buffer[0], sizeof(buffer), "CPU %s°C");
     lv_label_set_text(lv_cpuTemp, buffer);
 }
 
 void roomTempUpdate(int x, Tag* t) {
-    char buffer[20];
-    snprintf(buffer, sizeof(buffer), roomTempFormat[x], t->floatValue());
-    // Note: due to multi threading it is possible that this function
+    char buffer[20], buffer2[20];
+	t->getFormattedValueStr(&buffer[0], sizeof(buffer), NULL);
+	// if format string exists use it, otherwise just use tag format string
+	if (roomTempFormat[x]) { 
+		snprintf(buffer2, sizeof(buffer2), roomTempFormat[x], buffer);
+	} else {
+		strcpy(buffer2, buffer);
+	}
+	// Note: due to multi threading it is possible that this function
     // is called before the lv_roomTemp array is valid
     if (lv_roomTemp[t->valueUpdateID()] != NULL) {
-        lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer);
+        lv_label_set_text(lv_roomTemp[t->valueUpdateID()], buffer2);
         //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     }
     // secondary updates
     switch (t->valueUpdateID()) {
         case 1: 
-            snprintf(buffer, sizeof(buffer), t->getFormat(), t->floatValue());
-            lv_label_set_text(shack_temp_label, buffer);
-            break;
+			t->getFormattedValueStr(&buffer[0], sizeof(buffer), NULL);
+			lv_label_set_text(shack_temp_label, buffer);
+			break;
         default:
             break;
     }
@@ -298,7 +305,7 @@ void shackHeaterLedUpdate(int x, Tag *t) {
 
 void shackHeaterSliderUpdate(int x, Tag* t) {
     char buffer[20];
-    snprintf(buffer, sizeof(buffer), t->getFormat(), t->floatValue());
+    t->getFormattedValueStr(&buffer[0], sizeof(buffer), NULL);
     // prepare value for slider
     float f = t->floatValue() * 10;
     lv_slider_set_value(shack_heater_slider, f, LV_ANIM_ON);
@@ -324,7 +331,7 @@ void coolheat_create(lv_obj_t *parent) {
 
     // Shack temperature display
     shack_temp_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_temp_label, "99.9");
+    lv_label_set_text(shack_temp_label, "##.#");
     lv_obj_align(shack_temp_label, shack_heater_container, LV_ALIGN_OUT_TOP_RIGHT, 0, -5);
 
     // Switch to turn heater on
@@ -355,7 +362,7 @@ void coolheat_create(lv_obj_t *parent) {
     shack_heater_temp_sp_label = lv_label_create(shack_heater_container, NULL);
     lv_obj_add_style(shack_heater_temp_sp_label, LV_LABEL_PART_MAIN, &style_font24);
     //lv_obj_set_height(shack_heater_temp_sp_label, 50);
-    lv_label_set_text(shack_heater_temp_sp_label, "---");
+    lv_label_set_text(shack_heater_temp_sp_label, "###");
     lv_obj_align(shack_heater_temp_sp_label, shack_heater_slider, LV_ALIGN_OUT_TOP_MID, -3, -5);
 
     // Draw building outline
@@ -473,7 +480,7 @@ void settings_create(lv_obj_t *parent) {
     //lv_obj_set_style(obj1, &lv_style_plain_color);
     lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 0, 0);
     lv_cpuTemp = lv_label_create(obj1, NULL);
-    lv_label_set_text(lv_cpuTemp, "CPU --.-°C");
+    lv_label_set_text(lv_cpuTemp, "CPU ##.#°C");
     lv_obj_align(lv_cpuTemp, NULL, LV_ALIGN_CENTER, 0, 0);
 
     // Info Label

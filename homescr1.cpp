@@ -203,15 +203,17 @@ void init_tags(void)
     tp->setPublish();
     tp->registerUpdateCallback(&roomTempUpdate, 0);   // update screen
 
-    // Shack Temp is stored in index 0
+    // Shack Temp is stored in index 1
     tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
     tp->setSubscribe();
     tp->setFormat("%.1f");
+	tp->setNoreadStr("##.#");
     tp->registerUpdateCallback(&roomTempUpdate, 1);
 
-    // Bedroom 1 Temp
+    // Bedroom 1 Temp is stored in index 2
     tp = ts.addTag((const char*) TOPIC_BED1_ROOM_TEMP);
     tp->setSubscribe();
+	tp->setNoreadStr("##.#");
     tp->registerUpdateCallback(&roomTempUpdate, 2);
 
     // Shack heater on/off
@@ -312,35 +314,42 @@ void mqtt_connection_status(bool status) {
  * value can be NULL (clear stored value)
  */
 void mqtt_topic_update(const char *topic, const char *value) {
-    //printf("%s - %s %s\n", __func__, topic, value);
-    Tag *tp = ts.getTag(topic);
-    if (tp == NULL) {
-        fprintf(stderr, "%s: <%s> not  in ts\n", __func__, topic);
-        return;
-    }
-	if (value == NULL) {
-		//fprintf(stderr, "%s: <%s> received NULL value\n", __func__, topic);
-		// should set to "noread" value
-	} else {
-    	tp->setValue(value);
+	//printf("%s - %s %s\n", __func__, topic, value);
+	Tag *tp = ts.getTag(topic);
+	if (tp == NULL) {
+		fprintf(stderr, "%s: <%s> not  in ts\n", __func__, topic);
+		return;
 	}
+	tp->setValue(value);
 }
 
 /*
  * callback function for data tags
  * data tags notify when their value has been updated from an internal source
  * and the updated value requires publishing to MQTT
+ * noread is a special case where the value is invalid (e.g. mqtt claring retained message)
  */
 void mqtt_publish_tag(int x, Tag *t) {
-    if (mqtt.isConnected()) {
-        //printf("%s[%d] - publishing %s\n", __FILE__,__LINE__, t->getTopic());
-        if (t->type() == TAG_TYPE_BOOL) {
-            //printf("%s - bool detected <%s>\n", __func__, t->getTopic());
-            mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0, t->getRetain() );
-        } else {
-            mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue(), t->getRetain() );
-        }
-    }
+	if (mqtt.isConnected()) {
+		// handle noread case
+		if (t->getNoreadStatus()) {
+			// publish noread string if available, other wise publish noread value
+			if(strlen(t->getNoreadStr()) > 0) {
+				mqtt.publish(t->getTopic(), t->getNoreadStr(), 0, false );	// publish the noread string
+			} else {
+				mqtt.publish(t->getTopic(), t->getFormat(), t->getNoreadValue(), t->getRetain() );	// publish noread value
+			}
+		// handle normal (read ok) case
+		} else {
+			//printf("%s[%d] - publishing %s\n", __FILE__, __LINE__, t->getTopic());
+			if (t->type() == TAG_TYPE_BOOL) {
+				//printf("%s - bool detected <%s>\n", __func__, t->getTopic());
+				mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0, t->getRetain() );
+			} else {
+				mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue(), t->getRetain() );
+			}
+		}
+	}
 }
 
 /*
@@ -348,13 +357,13 @@ void mqtt_publish_tag(int x, Tag *t) {
  */
 void exit_loop(void)
 {
-    hw.set_brightness(screen_brightness());
-    screen_exit();
-    for (int i=0; i<=10; i++) {
-        lv_tick_inc(SCREEN_UPDATE);
-        lv_task_handler();
-        usleep(SCREEN_UPDATE * 1000);
-    }
+	hw.set_brightness(screen_brightness());
+	screen_exit();
+	for (int i=0; i<=10; i++) {
+		lv_tick_inc(SCREEN_UPDATE);
+		lv_task_handler();
+		usleep(SCREEN_UPDATE * 1000);
+	}
 }
 
 void main_loop()

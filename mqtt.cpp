@@ -225,9 +225,10 @@ void MQTT::message_callback(struct mosquitto *m, const struct mosquitto_message 
 		fprintf(stderr, "%s (null)\n", message->topic);
 	}
     */
-    if (topicUpdateCallback != NULL) {
-        (*topicUpdateCallback) (message->topic, (const char *)message->payload);
-    }
+	// message could be null (when clearing retained value)
+   	if (topicUpdateCallback != NULL) {
+		(*topicUpdateCallback) (message->topic, (const char *)message->payload);
+	}
 }
 
 void MQTT::log_callback(struct mosquitto *m, int level, const char *str) {

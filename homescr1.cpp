@@ -309,6 +309,7 @@ void mqtt_connection_status(bool status) {
  *
  * Note: do not store the pointers "topic" & "value", they will be
  * destroyed after this function returns
+ * value can be NULL (clear stored value)
  */
 void mqtt_topic_update(const char *topic, const char *value) {
     //printf("%s - %s %s\n", __func__, topic, value);
@@ -317,7 +318,12 @@ void mqtt_topic_update(const char *topic, const char *value) {
         fprintf(stderr, "%s: <%s> not  in ts\n", __func__, topic);
         return;
     }
-    tp->setValue(value);
+	if (value == NULL) {
+		//fprintf(stderr, "%s: <%s> received NULL value\n", __func__, topic);
+		// should set to "noread" value
+	} else {
+    	tp->setValue(value);
+	}
 }
 
 /*

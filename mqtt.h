@@ -79,7 +79,7 @@ public:
      * callback function for message receive
      * called by mosquitto when a subscribed topic is updated
      * @param mosq: pointer to mosquitto structure
-     * @param message: the received mosquite message
+     * @param message: the received mosquite message (can be NULL)
      */
     void message_callback(struct mosquitto *m, const struct mosquitto_message *message);
 

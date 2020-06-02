@@ -73,8 +73,12 @@ clean:
 	rm -f $(OBJS)
 
 install:
+ifneq ($(shell id -u), 0)
+	@echo "!!!! install requires root !!!!"
+else
 	install -o root $(BIN) $(BINDIR)$(BIN)
 	@echo ++++++++++++++++++++++++++++++++++++++++++++
 	@echo ++ $(BIN) has been installed in $(BINDIR)
 	@echo ++ systemctl start $(BIN)
 	@echo ++ systemctl stop $(BIN)
+endif

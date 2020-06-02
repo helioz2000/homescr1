@@ -138,24 +138,21 @@ void var_process(void) {
         Tag *tag = ts.getTag((char*) TOPIC_CPU_TEMP);
         if (tag != NULL) {
             tag->setValue(hw.read_cpu_temp(), true);
+            //printf("%s - %s %.1f\n", __func__, tag->getTopic(), tag->floatValue());
             cpuTempUpdate(0, tag);      // update on screen
         }
 
-/* disabled - to check if it causes interference with touch screen pointer device
         // update environment temperature
         float fValue;
         tag = ts.getTag((const char*) TOPIC_ENV_TEMP);
         if (tag != NULL) {
             if (envTempSensor.readTempC(&fValue)) {
                 tag->setValue(fValue);
-                if (mqtt.isConnected()) {
-                    mqtt.publish(TOPIC_ENV_TEMP, "%.1f", tag->floatValue() );
-                }
             } else {
+				tag->setNoreadStatus(true);
                 syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");
             }
         }
-        */
     }
 
     // reconnect mqtt if required
@@ -195,13 +192,15 @@ void init_tags(void)
     Tag* tp = ts.addTag((char*) TOPIC_CPU_TEMP);
     tp->setPublish();
     tp->setFormat("%.1f");
-    tp->registerUpdateCallback(&cpuTempUpdate, 15);   // update screen
+    tp->registerUpdateCallback(&cpuTempUpdate, 0);   // update screen
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
     // Environment temperature is stored in index 0
     tp = ts.addTag((char*) TOPIC_ENV_TEMP);
     tp->setPublish();
+    tp->setFormat("%.1f");
     tp->registerUpdateCallback(&roomTempUpdate, 0);   // update screen
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
     // Shack Temp is stored in index 1
     tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
@@ -213,6 +212,7 @@ void init_tags(void)
     // Bedroom 1 Temp is stored in index 2
     tp = ts.addTag((const char*) TOPIC_BED1_ROOM_TEMP);
     tp->setSubscribe();
+    tp->setFormat("%.1f");
 	tp->setNoreadStr("##.#");
     tp->registerUpdateCallback(&roomTempUpdate, 2);
 
@@ -231,6 +231,7 @@ void init_tags(void)
     tp->setPublish();
     tp->setRetain(true);    // needs to be retained during broker reboot
     tp->setFormat("%.1f");
+    tp->setNoreadStr("##.#");
     tp->registerUpdateCallback(&shackHeaterSliderUpdate, 0);
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
@@ -327,27 +328,18 @@ void mqtt_topic_update(const char *topic, const char *value) {
  * callback function for data tags
  * data tags notify when their value has been updated from an internal source
  * and the updated value requires publishing to MQTT
- * noread is a special case where the value is invalid (e.g. mqtt claring retained message)
  */
 void mqtt_publish_tag(int x, Tag *t) {
+	char buffer[20];
 	if (mqtt.isConnected()) {
-		// handle noread case
-		if (t->getNoreadStatus()) {
-			// publish noread string if available, other wise publish noread value
-			if(strlen(t->getNoreadStr()) > 0) {
-				mqtt.publish(t->getTopic(), t->getNoreadStr(), 0, false );	// publish the noread string
-			} else {
-				mqtt.publish(t->getTopic(), t->getFormat(), t->getNoreadValue(), t->getRetain() );	// publish noread value
-			}
-		// handle normal (read ok) case
+		//printf("%s[%d] - publishing %s\n", __FILE__, __LINE__, t->getTopic());
+		if (t->type() == TAG_TYPE_BOOL) {
+			//printf("%s - bool detected <%s>\n", __func__, t->getTopic());
+			mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0, t->getRetain() );
 		} else {
-			//printf("%s[%d] - publishing %s\n", __FILE__, __LINE__, t->getTopic());
-			if (t->type() == TAG_TYPE_BOOL) {
-				//printf("%s - bool detected <%s>\n", __func__, t->getTopic());
-				mqtt.publish(t->getTopic(), t->boolValue() ? MQTT_TRUE : MQTT_FALSE, 0, t->getRetain() );
-			} else {
-				mqtt.publish(t->getTopic(), t->getFormat(), t->floatValue(), t->getRetain() );
-			}
+			//printf("%s - publishing %s %.1f\n", __func__, t->getTopic(), t->floatValue());
+			t->getFormattedValueStr(buffer, sizeof(buffer), NULL);
+			mqtt.publish(t->getTopic(), buffer, t->getRetain() );
 		}
 	}
 }

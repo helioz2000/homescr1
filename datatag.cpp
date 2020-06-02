@@ -110,7 +110,7 @@ Tag::Tag(const char *topicStr) {
     this->topic = topicStr;
     this->_format = "";
 	this->_noreadStr = "";
-	_noreadStatus = false;
+	_noreadStatus = true;
 	_noreadValue = 0.0;
     _valueUpdateCB = NULL;
     _valueUpdateID = -1;
@@ -218,7 +218,7 @@ void Tag::testCallback() {
 void Tag::setValue(double doubleValue, bool publishMe) {
     topicDoubleValue = doubleValue;
     lastUpdateTime = time(NULL);
-    
+    _noreadStatus = false;
     // Publish new value if required 
     if (publish && publishMe) {
         //printf("%s[%d] - publishing <%s>\n", __FILE__, __LINE__, topic.c_str());

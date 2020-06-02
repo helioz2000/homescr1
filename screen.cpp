@@ -27,6 +27,9 @@
 
 extern TagStore ts;
 
+using namespace std;
+
+
 /**********************
  *   PRIVATE VARIABLES
  **********************/
@@ -254,9 +257,9 @@ void screen_exit(void) {
 void cpuTempUpdate(int x, Tag* t) {
     char buffer[20];
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-	//snprintf(buffer, sizeof(buffer), "CPU %.1f°C", t->floatValue());
-	t->getFormattedValueStr(&buffer[0], sizeof(buffer), "CPU %s°C");
-    lv_label_set_text(lv_cpuTemp, buffer);
+	t->getFormattedValueStr(buffer, sizeof(buffer), NULL);
+	string s = "CPU "; s += buffer; s += "°C";
+    lv_label_set_text(lv_cpuTemp, s.c_str());
 }
 
 void roomTempUpdate(int x, Tag* t) {

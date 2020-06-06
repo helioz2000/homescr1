@@ -216,6 +216,20 @@ void init_tags(void)
 	tp->setNoreadStr("##.#");
     tp->registerUpdateCallback(&roomTempUpdate, 2);
 
+	// Balcony Temp is stored in index 3
+    tp = ts.addTag((const char*) TOPIC_BALCONY_TEMP);
+    tp->setSubscribe();
+    tp->setFormat("%.1f");
+	tp->setNoreadStr("##.#");
+    tp->registerUpdateCallback(&roomTempUpdate, 3);
+
+	// Balcony Humidity is stored in index 4
+    tp = ts.addTag((const char*) TOPIC_BALCONY_HUMIDITY);
+    tp->setSubscribe();
+    tp->setFormat("%.1f");
+	tp->setNoreadStr("##.#");
+    tp->registerUpdateCallback(&roomTempUpdate, 4);
+
     // Shack heater on/off
     tp = ts.addTag((const char*) TOPIC_SHACK_HEATER_ENABLE);
     tp->setSubscribe();

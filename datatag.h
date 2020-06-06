@@ -263,6 +263,10 @@ public:
     tag_type_t type(void);
 
 private:
+
+	void performCallbacks(bool publishMe);
+	void setNoread(bool newNoread);
+
     /**
      * All properties of this class are private
      * Use setters & getters to access class members
@@ -279,8 +283,8 @@ private:
     int _valueUpdateID;                 // ID for value update callback
     int _publishTagID;                  // ID for tag publish callback
 	bool _noreadStatus;					// true = value not available or invalid
-    bool publish;                       // true = publish to topic when value changes
-    bool subscribe;                     // true = subscribe to this topic
+    bool _publish;                       // true = publish to topic when value changes
+    bool _subscribe;                     // true = subscribe to this topic
     bool _retain;                       // retain option sent to broker on publish 
     tag_type_t _type;                   // data type
 };

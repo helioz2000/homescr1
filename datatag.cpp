@@ -116,8 +116,8 @@ Tag::Tag(const char *topicStr) {
     _valueUpdateID = -1;
     _publishTagCB = NULL;
     _publishTagID = -1;
-    publish = false;
-    subscribe = false;
+    _publish = false;
+    _subscribe = false;
     _retain = false;
     _type = TAG_TYPE_NUMERIC;
     //cout << topic << endl;
@@ -206,6 +206,24 @@ void Tag::testCallback() {
     }
 }
 
+void Tag::setNoread(bool newNoread) {
+	_noreadStatus = newNoread;
+}
+
+void Tag::performCallbacks(bool publishMe) {
+	    // Publish new value if required 
+    if (_publish && publishMe) {
+        //printf("%s[%d] - publishing <%s>\n", __FILE__, __LINE__, topic.c_str());
+        // call publishTag callback if it exists
+        if (_publishTagCB != NULL) {
+            (*_publishTagCB) (_publishTagID, this); }
+    } else {    // otherwise perform local value update
+        // call valueUpdate callback if it exists
+        if (_valueUpdateCB != NULL) {
+            (*_valueUpdateCB) (_valueUpdateID, this); }
+    }
+}
+
 /**
  * this function is called in two separate and distinct cases:
  * 1) when an update is received from and external source (eg mqtt broker)
@@ -218,18 +236,8 @@ void Tag::testCallback() {
 void Tag::setValue(double doubleValue, bool publishMe) {
     topicDoubleValue = doubleValue;
     lastUpdateTime = time(NULL);
-    _noreadStatus = false;
-    // Publish new value if required 
-    if (publish && publishMe) {
-        //printf("%s[%d] - publishing <%s>\n", __FILE__, __LINE__, topic.c_str());
-        // call publishTag callback if it exists
-        if (_publishTagCB != NULL) {
-            (*_publishTagCB) (_publishTagID, this); }
-    } else {    // otherwise perform local value update
-        // call valueUpdate callback if it exists
-        if (_valueUpdateCB != NULL) {
-            (*_valueUpdateCB) (_valueUpdateID, this); }
-    }
+    setNoread(false);
+	performCallbacks(publishMe);
 }
 
 void Tag::setValue(float floatValue, bool publishMe) {
@@ -255,7 +263,7 @@ bool Tag::setValue(const char* strValue, bool publishMe) {
 	// handle "noread" (or clear value) case?
 	if (strValue == NULL) {
 		newValue = _noreadValue;
-		_noreadStatus = true;
+		setNoread(true);
 		result = 1;
 	} else {
 		switch (_type) {
@@ -275,7 +283,11 @@ bool Tag::setValue(const char* strValue, bool publishMe) {
 		fprintf(stderr, "%s - failed to setValue <%s> for topic %s\n", __func__, strValue, topic.c_str());
 		return false;
 	}
-    setValue(newValue, publishMe);
+	if (!_noreadStatus) {
+		setValue(newValue, publishMe);
+	} else {
+		performCallbacks(publishMe);
+	}
     return true;
 }
 
@@ -307,19 +319,19 @@ bool Tag::getNoreadStatus(void) {
 }
 
 bool Tag::isPublish() {
-    return publish;
+    return _publish;
 }
 
 bool Tag::isSubscribe() {
-    return subscribe;
+    return _subscribe;
 }
 
 void Tag::setPublish(void) {
-    publish = true;
+    _publish = true;
 }
 
 void Tag::setSubscribe(void) {
-    subscribe = true;
+    _subscribe = true;
 }
 
 void Tag::setRetain(bool newRetain) {

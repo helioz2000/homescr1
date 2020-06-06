@@ -62,6 +62,8 @@ static lv_obj_t *shack_heater_switch;
 static lv_obj_t *shack_heater_slider;
 static lv_obj_t *shack_heater_temp_sp_label;
 static lv_obj_t *shack_heater_container;
+static lv_obj_t *temps1_container;
+
 
 // Common styles
 static lv_style_t style_led_green;
@@ -75,7 +77,7 @@ static lv_style_t style_box;
 #define ROOM_TEMPS_MAX 5
 lv_obj_t *lv_roomTemp[ROOM_TEMPS_MAX];
 
-const char* roomTempFormat[ROOM_TEMPS_MAX] = { "This %s°C", "Shack %s°C", "Bed1 %s°C", NULL, NULL };
+const char* roomTempFormat[ROOM_TEMPS_MAX] = { "Local %s°C", "Shack %s°C", "Bed1 %s°C", "Balcony %s°C", "Balcony %s%%" };
 
 /**********************
  *   PRIVATE PROTOTYPES
@@ -402,6 +404,20 @@ void temps_create(lv_obj_t *parent) {
     lv_page_set_scrl_height(parent, lv_obj_get_height(parent));
     lv_page_set_scrlbar_mode(parent, LV_SCRLBAR_MODE_OFF);
 
+	// Container for temp readings 
+    temps1_container = lv_cont_create(parent, NULL);
+    lv_obj_set_auto_realign(temps1_container, false); 
+    lv_obj_set_size(temps1_container, LV_DPI *1.8, lv_obj_get_height(parent) * 0.9);
+    lv_obj_align(temps1_container, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 5);
+    // Container box label as per style_box
+    //lv_obj_add_style(temps1_container, LV_CONT_PART_MAIN, &style_box);
+    //lv_obj_set_style_local_value_str(temps1_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "Shack");
+	// Alignment for objects inside container
+	//lv_obj_set_auto_realign(temps1_container, true);	// Auto realign when the size changes
+	//lv_obj_align_origo(temps1_container, NULL, LV_ALIGN_CENTER, 0, 0);  //This parameter will be used when realigned
+    lv_cont_set_fit(temps1_container, LV_FIT_TIGHT);
+    lv_cont_set_layout(temps1_container, LV_LAYOUT_COLUMN_MID);
+
 /*
     // Draw building outline
     static lv_point_t line_points[] = {{0, 0}, {750, 0}, {750, 300}, {0, 300}, {0, 0}};
@@ -413,31 +429,49 @@ void temps_create(lv_obj_t *parent) {
 */
 
     // Screen Room Temperature
-    lv_obj_t *obj0 = lv_obj_create(parent, NULL);
-    lv_obj_set_size(obj0, 150, 40);
+    lv_obj_t *obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_set_size(obj, 150, 40);
     //lv_obj_set_style(obj0, &lv_style_plain_color);
-    lv_obj_align(obj0, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 20);
-    lv_roomTemp[0] = lv_label_create(obj0, NULL);
+    //lv_obj_align(obj0, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
+    lv_roomTemp[0] = lv_label_create(obj, NULL);
     lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
     lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
 
     // Shack Temperature
-    lv_obj_t *obj1 = lv_obj_create(parent, NULL);
-    lv_obj_set_size(obj1, 150, 40);
+    obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_set_size(obj, 150, 40);
     //lv_obj_set_style(obj1, &lv_style_plain_color);
-    lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 20, 80);
-    lv_roomTemp[1] = lv_label_create(obj1, NULL);
+    //lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 70);
+    lv_roomTemp[1] = lv_label_create(obj, NULL);
     lv_label_set_text(lv_roomTemp[1], roomTempFormat[1]);
     lv_obj_align(lv_roomTemp[1], NULL, LV_ALIGN_CENTER, 0, 0);
 
     // Bedroom 1 Temperature
-    lv_obj_t *obj2 = lv_obj_create(parent, NULL);
-    lv_obj_set_size(obj2, 150, 40);
+    obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_set_size(obj, 150, 40);
     //lv_obj_set_style(obj2, &lv_style_plain_color);
-    lv_obj_align(obj2, parent, LV_ALIGN_IN_TOP_LEFT, 20, 140);
-    lv_roomTemp[2] = lv_label_create(obj2, NULL);
+    //lv_obj_align(obj2, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 130);
+    lv_roomTemp[2] = lv_label_create(obj, NULL);
     lv_label_set_text(lv_roomTemp[2], roomTempFormat[2]);
     lv_obj_align(lv_roomTemp[2], NULL, LV_ALIGN_CENTER, 0, 0);
+    
+	// Balcony Temperature
+    obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_set_size(obj, 150, 40);
+    //lv_obj_set_style(obj2, &lv_style_plain_color);
+    //lv_obj_align(obj2, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 130);
+    lv_roomTemp[3] = lv_label_create(obj, NULL);
+    lv_label_set_text(lv_roomTemp[3], roomTempFormat[3]);
+    lv_obj_align(lv_roomTemp[3], NULL, LV_ALIGN_CENTER, 0, 0);
+
+	// Balcony Humidity
+    obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_set_size(obj, 150, 40);
+    //lv_obj_set_style(obj2, &lv_style_plain_color);
+    //lv_obj_align(obj2, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 130);
+    lv_roomTemp[4] = lv_label_create(obj, NULL);
+    lv_label_set_text(lv_roomTemp[4], roomTempFormat[4]);
+    lv_obj_align(lv_roomTemp[4], NULL, LV_ALIGN_CENTER, 0, 0);
 
 }
 

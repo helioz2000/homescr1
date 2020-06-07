@@ -10,9 +10,9 @@ CC=gcc
 CXX=g++
 CFLAGS = -Wall -Wshadow -Wundef -Wmaybe-uninitialized
 #for debug
-CFLAGS += -O0 -g3
+#CFLAGS += -O0 -g3
 # for production
-# CFLAGS += O3
+CFLAGS += -O3
 CFLAGS += -I./
 CXXFLAGS = $(CFLAGS)
 

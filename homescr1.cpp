@@ -32,7 +32,7 @@
 #include "datatag.h"
 #include "mcp9808.h"
 
-#define VAR_PROCESS_INTERVAL 5      // seconds
+#define VAR_PROCESS_INTERVAL 15      // seconds
 
 //#define MQTT_CONNECT_TIMEOUT 5      // seconds
 
@@ -147,7 +147,8 @@ void var_process(void) {
         tag = ts.getTag((const char*) TOPIC_ENV_TEMP);
         if (tag != NULL) {
             if (envTempSensor.readTempC(&fValue)) {
-                tag->setValue(fValue);
+                tag->setValue(fValue, true);
+                roomTempUpdate(0, tag);		// update on screen
             } else {
 				tag->setNoreadStatus(true);
                 syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");

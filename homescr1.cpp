@@ -54,7 +54,16 @@ extern void roomTempUpdate(int x, Tag* t);
 extern void shackHeaterSwitchUpdate(int x, Tag* t);
 extern void shackHeaterSliderUpdate(int x, Tag* t);
 extern void shackHeaterLedUpdate(int x, Tag* t);
-
+extern void shackRadio240Pwr1SwitchUpdate(int x, Tag* t);
+extern void shackRadio240Pwr2SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr1SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr2SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr3SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr4SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr5SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr6SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr7SwitchUpdate(int x, Tag* t);
+extern void shackRadio12Pwr8SwitchUpdate(int x, Tag* t);
 
 // Proto types
 void subscribe_tags(void);
@@ -184,8 +193,23 @@ void init_values(void)
 }
 
 /*
+ * Initialise bool tag
+ */
+Tag* init_bool_tag( const char* topic, void (*updateCallback) (int,Tag*), bool publish = true ) {
+    Tag* tp = ts.addTag( topic );
+    tp->setSubscribe();
+    tp->setType(TAG_TYPE_BOOL);
+    tp->registerUpdateCallback(updateCallback, 0);
+	if (publish) {
+        tp->setPublish();
+		tp->setRetain(true);    // needs to be retained during broker reboot
+    	tp->registerPublishCallback(&mqtt_publish_tag, 0);
+    }
+    return tp;
+}
+
+/*
  * Initialise the tag database (tagstore)
- *
  */
 void init_tags(void)
 {
@@ -256,6 +280,33 @@ void init_tags(void)
     tp->setType(TAG_TYPE_BOOL);
     tp->registerUpdateCallback(&shackHeaterLedUpdate, 0);
 
+    // Shack Radio 240V Power 1
+    tp = ts.addTag((const char*) TOPIC_SHACK_RADIO240_PWR1);
+    tp->setSubscribe();
+    tp->setPublish();
+    tp->setRetain(true);    // needs to be retained during broker reboot
+    tp->setType(TAG_TYPE_BOOL);
+    tp->registerUpdateCallback(&shackRadio240Pwr1SwitchUpdate, 0);
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
+    
+    // Shack Radio 240V Power 2
+    tp = ts.addTag((const char*) TOPIC_SHACK_RADIO240_PWR2);
+    tp->setSubscribe();
+    tp->setPublish();
+    tp->setRetain(true);    // needs to be retained during broker reboot
+    tp->setType(TAG_TYPE_BOOL);
+    tp->registerUpdateCallback(&shackRadio240Pwr2SwitchUpdate, 0);
+    tp->registerPublishCallback(&mqtt_publish_tag, 0);
+
+	// Shack Radio 12V Power 1 - 8
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR1, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR2, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR3, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR4, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR5, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR6, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR7, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR8, &shackRadio12Pwr1SwitchUpdate);
 
 }
 

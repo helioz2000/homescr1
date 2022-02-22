@@ -41,7 +41,15 @@ CPPOBJS = $(patsubst %.cpp,$(OBJDIR)/%.o,$(CPPSRCS))
 SRCS = $(CSRCS) $(CPPSRCS)
 OBJS = $(COBJS) $(CPPOBJS)
 
+# dependencies
+#homescr1.o: homescr1.cpp topics.h mqtt.h hardware.h screen.h datatag.h mcp9808.h
+#	$(CC) -c homescr1.cpp
+
+#screen.o: screen.h topics.h datatag.h
+#	$(CC) - screen.cpp
+
 #.PHONY: clean
+
 
 all: default
 

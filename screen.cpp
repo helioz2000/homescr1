@@ -67,26 +67,11 @@ static lv_obj_t *shack_radio240pwr1_label;
 static lv_obj_t *shack_radio240pwr1_switch;
 static lv_obj_t *shack_radio240pwr2_label;
 static lv_obj_t *shack_radio240pwr2_switch;
-static lv_obj_t *shack_radio12V_container;
-static lv_obj_t *shack_radio12pwr1_label;
-static lv_obj_t *shack_radio12pwr1_switch;
-static lv_obj_t *shack_radio12pwr2_label;
-static lv_obj_t *shack_radio12pwr2_switch;
-static lv_obj_t *shack_radio12pwr3_label;
-static lv_obj_t *shack_radio12pwr3_switch;
-static lv_obj_t *shack_radio12pwr4_label;
-static lv_obj_t *shack_radio12pwr4_switch;
-static lv_obj_t *shack_radio12pwr5_label;
-static lv_obj_t *shack_radio12pwr5_switch;
-static lv_obj_t *shack_radio12pwr6_label;
-static lv_obj_t *shack_radio12pwr6_switch;
-static lv_obj_t *shack_radio12pwr7_label;
-static lv_obj_t *shack_radio12pwr7_switch;
-static lv_obj_t *shack_radio12pwr8_label;
-static lv_obj_t *shack_radio12pwr8_switch;
+static lv_obj_t *shack_radio12V_container1;
+static lv_obj_t *shack_radio12V_container2;
+static lv_obj_t *shack_radio12pwr_label[8];
+static lv_obj_t *shack_radio12pwr_switch[8];
 static lv_obj_t *temps1_container;
-
-
 
 // Common styles
 static lv_style_t style_led_green;
@@ -369,72 +354,72 @@ void shackRadio240Pwr2SwitchUpdate(int x, Tag* t) {
 void shackRadio12Pwr1SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr1_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[0], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr1_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[0], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr2SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr2_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[1], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr2_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[1], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr3SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr3_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[2], LV_ANIM_ON);
     } else {
-       lv_switch_off(shack_radio12pwr3_switch, LV_ANIM_ON);
+       lv_switch_off(shack_radio12pwr_switch[2], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr4SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr4_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[3], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr4_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[3], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr5SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr5_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[4], LV_ANIM_ON);
     } else {
-       lv_switch_off(shack_radio12pwr5_switch, LV_ANIM_ON);
+       lv_switch_off(shack_radio12pwr_switch[4], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr6SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr6_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[5], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr6_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[5], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr7SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr7_switch, LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[6], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr7_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[6], LV_ANIM_ON);
     }
 }
 
 void shackRadio12Pwr8SwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-       lv_switch_on(shack_radio12pwr8_switch, LV_ANIM_ON);
+       lv_switch_on(shack_radio12pwr_switch[7], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr8_switch, LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[7], LV_ANIM_ON);
     }
 }
 
@@ -501,6 +486,22 @@ void coolheat_create(lv_obj_t *parent) {
 
 }
 
+/*
+ * Create single 12 power switch with label
+ */
+void create_shack_radio12pwr (int i, const char* label, lv_obj_t* container, lv_obj_t* parent, lv_obj_t* alignobj, lv_align_t align) {
+    // Switch for 12V Radio Power
+    shack_radio12pwr_label[i] = lv_label_create(parent, NULL);
+    lv_label_set_text(shack_radio12pwr_label[i], label);
+    lv_obj_align(shack_radio12pwr_label[i], alignobj, align, 0, 10);
+    shack_radio12pwr_switch[i] = lv_switch_create(container, NULL);
+    lv_obj_set_size(shack_radio12pwr_switch[i], SWITCH_SIZE_X, SWITCH_SIZE_Y);
+    lv_obj_align(shack_radio12pwr_switch[i], shack_radio12pwr_label[i], LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
+    lv_obj_set_event_cb(shack_radio12pwr_switch[i], shack_radio12pwr_switch_action);
+    Tag *t = ts.getTag(Topic_Shack_Radio12_Pwr[i]);
+    lv_obj_set_user_data(shack_radio12pwr_switch[i], { i, t } );
+}
+
 void radio_create(lv_obj_t *parent) {
 /*
     lv_page_set_style(parent, LV_PAGE_STYLE_BG, &lv_style_transp_fit);
@@ -521,15 +522,26 @@ void radio_create(lv_obj_t *parent) {
     lv_obj_add_style(shack_radio240V_container, LV_CONT_PART_MAIN, &style_box);
     lv_obj_set_style_local_value_str(shack_radio240V_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "240VAC");
 
-    // Container for 12V radio controls
-    shack_radio12V_container = lv_cont_create(parent, NULL);
-    lv_obj_set_auto_realign(shack_radio12V_container, false);
-    lv_obj_set_size(shack_radio12V_container, LV_DPI *1.8, lv_obj_get_height(parent) * 0.9);
+    // Container 1 for 12V radio controls
+    shack_radio12V_container1 = lv_cont_create(parent, NULL);
+    lv_obj_set_auto_realign(shack_radio12V_container1, false);
+    lv_obj_set_size(shack_radio12V_container1, LV_DPI *1.8, lv_obj_get_height(parent) * 0.9);
 	// align with 240V container
-    lv_obj_align(shack_radio12V_container, shack_radio240V_container, LV_ALIGN_OUT_BOTTOM_RIGHT, 10, 0);
+    lv_obj_align(shack_radio12V_container1, shack_radio240V_container, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
     // Container box label as per style_box
-    lv_obj_add_style(shack_radio12V_container, LV_CONT_PART_MAIN, &style_box);
-    lv_obj_set_style_local_value_str(shack_radio12V_container, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "12VDC");
+    lv_obj_add_style(shack_radio12V_container1, LV_CONT_PART_MAIN, &style_box);
+    lv_obj_set_style_local_value_str(shack_radio12V_container1, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "12VDC Radios");
+
+    // Container 2 for 12V radio controls
+    shack_radio12V_container2 = lv_cont_create(parent, NULL);
+    lv_obj_set_auto_realign(shack_radio12V_container2, false);
+    lv_obj_set_size(shack_radio12V_container2, LV_DPI *1.8, lv_obj_get_height(parent) * 0.9);
+	// align with 12V container1
+    lv_obj_align(shack_radio12V_container2, shack_radio12V_container1, LV_ALIGN_OUT_RIGHT_MID, 10, 0);
+    // Container box label as per style_box
+    lv_obj_add_style(shack_radio12V_container2, LV_CONT_PART_MAIN, &style_box);
+    lv_obj_set_style_local_value_str(shack_radio12V_container2, LV_CONT_PART_MAIN, LV_STATE_DEFAULT, "12VDC Acc");
+
 
     // Switch for 240V Radio Power 1
     shack_radio240pwr1_label = lv_label_create(parent, NULL);
@@ -553,93 +565,15 @@ void radio_create(lv_obj_t *parent) {
     t = ts.getTag(TOPIC_SHACK_RADIO240_PWR2);
     lv_obj_set_user_data(shack_radio240pwr2_switch, { 0, t } );
 
-	// Switch for 12V Radio Power 1
-	shack_radio12pwr1_label = lv_label_create(parent, NULL);
-	lv_label_set_text(shack_radio12pwr1_label, "IC-7300");
-	lv_obj_align(shack_radio12pwr1_label, shack_radio12V_container, LV_ALIGN_IN_TOP_MID, 0, 5);
-	shack_radio12pwr1_switch = lv_switch_create(shack_radio12V_container, NULL);
-	lv_obj_set_size(shack_radio12pwr1_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr1_switch, shack_radio12pwr1_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr1_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR1);
-    lv_obj_set_user_data(shack_radio12pwr1_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 2
-    shack_radio12pwr2_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr2_label, "IC-9700");
-    lv_obj_align(shack_radio12pwr2_label, shack_radio12pwr1_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr1_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr2_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr2_switch, shack_radio12pwr2_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr2_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR2);
-    lv_obj_set_user_data(shack_radio12pwr2_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 3
-    shack_radio12pwr3_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr3_label, "IC-5100");
-    lv_obj_align(shack_radio12pwr3_label, shack_radio12pwr2_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr3_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr3_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr3_switch, shack_radio12pwr3_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr3_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR3);
-    lv_obj_set_user_data(shack_radio12pwr3_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 4
-    shack_radio12pwr4_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr4_label, "Power 4");
-    lv_obj_align(shack_radio12pwr4_label, shack_radio12pwr3_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr4_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr4_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr4_switch, shack_radio12pwr4_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr4_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR4);
-    lv_obj_set_user_data(shack_radio12pwr4_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 5
-    shack_radio12pwr5_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr5_label, "Power 5");
-    lv_obj_align(shack_radio12pwr5_label, shack_radio12pwr4_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr5_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr5_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr5_switch, shack_radio12pwr5_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr5_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR5);
-    lv_obj_set_user_data(shack_radio12pwr5_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 6
-    shack_radio12pwr6_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr6_label, "Power 6");
-    lv_obj_align(shack_radio12pwr6_label, shack_radio12pwr5_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr6_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr6_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr6_switch, shack_radio12pwr6_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr6_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR6);
-    lv_obj_set_user_data(shack_radio12pwr6_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 7
-    shack_radio12pwr7_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr7_label, "Power 7");
-    lv_obj_align(shack_radio12pwr7_label, shack_radio12pwr6_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr7_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr7_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr7_switch, shack_radio12pwr7_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr7_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR7);
-    lv_obj_set_user_data(shack_radio12pwr7_switch, { 0, t } );
-
-    // Switch for 12V Radio Power 8
-    shack_radio12pwr8_label = lv_label_create(parent, NULL);
-    lv_label_set_text(shack_radio12pwr8_label, "Power 8");
-    lv_obj_align(shack_radio12pwr8_label, shack_radio12pwr7_switch, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-    shack_radio12pwr1_switch = lv_switch_create(shack_radio12V_container, NULL);
-    lv_obj_set_size(shack_radio12pwr8_switch, SWITCH_SIZE_X, SWITCH_SIZE_Y);
-    lv_obj_align(shack_radio12pwr8_switch, shack_radio12pwr8_label, LV_ALIGN_OUT_BOTTOM_MID, 0, 5);
-    lv_obj_set_event_cb(shack_radio12pwr8_switch, shack_radio12pwr_switch_action);
-    t = ts.getTag(TOPIC_SHACK_RADIO12_PWR8);
-    lv_obj_set_user_data(shack_radio12pwr8_switch, { 0, t } );
+	// Swicthes for 12V Radio Power
+	create_shack_radio12pwr(0, "IC-7300", shack_radio12V_container1, parent, shack_radio12V_container1, LV_ALIGN_IN_TOP_MID); 
+	create_shack_radio12pwr(1, "IC-9700", shack_radio12V_container1, parent, shack_radio12pwr_switch[0], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(2, "IC-5100", shack_radio12V_container1, parent, shack_radio12pwr_switch[1], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(3, "Power 4", shack_radio12V_container1, parent, shack_radio12pwr_switch[2], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(4, "Power 5", shack_radio12V_container2, parent, shack_radio12V_container2, LV_ALIGN_IN_TOP_MID);
+	create_shack_radio12pwr(5, "Power 6", shack_radio12V_container2, parent, shack_radio12pwr_switch[4], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(6, "Power 7", shack_radio12V_container2, parent, shack_radio12pwr_switch[5], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(7, "Power 8", shack_radio12V_container2, parent, shack_radio12pwr_switch[6], LV_ALIGN_OUT_BOTTOM_MID);
 
 }
 
@@ -921,25 +855,6 @@ void shack_radio240pwr1_switch_action(lv_obj_t *obj, lv_event_t event) {
 }
 
 /**
- * Called when the shack radio 12V power 1-8 on/off switch is operated
- * @param obj: pointer to the switch object
- * @param event: switch event
- */
-void shack_radio12pwr_switch_action(lv_obj_t *obj, lv_event_t event) {
-    if(event == LV_EVENT_VALUE_CHANGED) {
-        bool newState = lv_switch_get_state(obj);
-        //printf("Shack Radio 240V Pwr1 switch State: %s\n", newState ? "On" : "Off");
-        Tag *t = (Tag*)lv_obj_get_user_data(obj).pVal;
-        if (t == NULL) {
-            fprintf(stderr, "%s[%d] - failed to retrieve tag\n", __FILE__, __LINE__);
-        } else {
-            t->setValue(newState, true);
-        }
-    }
-}
-
-
-/**
  * Called when the shack radio 240V power 2 on/off switch is operated
  * @param obj: pointer to the switch object
  * @param event: switch event
@@ -956,6 +871,26 @@ void shack_radio240pwr2_switch_action(lv_obj_t *obj, lv_event_t event) {
         }
     }
 }
+
+/**
+ * Called when the shack radio 12V power 1-8 on/off switch is operated
+ * @param obj: pointer to the switch object
+ * @param event: switch event
+ */
+void shack_radio12pwr_switch_action(lv_obj_t *obj, lv_event_t event) {
+    if(event == LV_EVENT_VALUE_CHANGED) {
+        bool newState = lv_switch_get_state(obj);
+        //printf("Shack Radio 12V Pwr switch State: %s\n", newState ? "On" : "Off");
+        Tag *t = (Tag*)lv_obj_get_user_data(obj).pVal;
+        if (t == NULL) {
+            fprintf(stderr, "%s[%d] - failed to retrieve tag\n", __FILE__, __LINE__);
+        } else {
+            t->setValue(newState, true);
+            //printf("topic: %s\n", t->getTopic());
+        }
+    }
+}
+
 
 /**
  * Called when a new value on the slider on the Chart tab is set

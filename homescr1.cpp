@@ -299,14 +299,14 @@ void init_tags(void)
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
 	// Shack Radio 12V Power 1 - 8
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR1, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR2, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR3, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR4, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR5, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR6, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR7, &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) TOPIC_SHACK_RADIO12_PWR8, &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[0], &shackRadio12Pwr1SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[1], &shackRadio12Pwr2SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[2], &shackRadio12Pwr3SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[3], &shackRadio12Pwr4SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[4], &shackRadio12Pwr5SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[5], &shackRadio12Pwr6SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[6], &shackRadio12Pwr7SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[7], &shackRadio12Pwr8SwitchUpdate);
 
 }
 

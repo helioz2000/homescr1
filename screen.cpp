@@ -351,75 +351,12 @@ void shackRadio240Pwr2SwitchUpdate(int x, Tag* t) {
     }
 }
 
-void shackRadio12Pwr1SwitchUpdate(int x, Tag* t) {
+void shackRadio12PwrSwitchUpdate(int x, Tag* t) {
     //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
     if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[0], LV_ANIM_ON);
+        lv_switch_on(shack_radio12pwr_switch[x], LV_ANIM_ON);
     } else {
-        lv_switch_off(shack_radio12pwr_switch[0], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr2SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[1], LV_ANIM_ON);
-    } else {
-        lv_switch_off(shack_radio12pwr_switch[1], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr3SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[2], LV_ANIM_ON);
-    } else {
-       lv_switch_off(shack_radio12pwr_switch[2], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr4SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[3], LV_ANIM_ON);
-    } else {
-        lv_switch_off(shack_radio12pwr_switch[3], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr5SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[4], LV_ANIM_ON);
-    } else {
-       lv_switch_off(shack_radio12pwr_switch[4], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr6SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[5], LV_ANIM_ON);
-    } else {
-        lv_switch_off(shack_radio12pwr_switch[5], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr7SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-        lv_switch_on(shack_radio12pwr_switch[6], LV_ANIM_ON);
-    } else {
-        lv_switch_off(shack_radio12pwr_switch[6], LV_ANIM_ON);
-    }
-}
-
-void shackRadio12Pwr8SwitchUpdate(int x, Tag* t) {
-    //printf("%s - [%s] %f\n", __func__, t->getTopic(), t->floatValue());
-    if (t->boolValue()) {
-       lv_switch_on(shack_radio12pwr_switch[7], LV_ANIM_ON);
-    } else {
-        lv_switch_off(shack_radio12pwr_switch[7], LV_ANIM_ON);
+        lv_switch_off(shack_radio12pwr_switch[x], LV_ANIM_ON);
     }
 }
 

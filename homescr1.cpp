@@ -54,16 +54,10 @@ extern void roomTempUpdate(int x, Tag* t);
 extern void shackHeaterSwitchUpdate(int x, Tag* t);
 extern void shackHeaterSliderUpdate(int x, Tag* t);
 extern void shackHeaterLedUpdate(int x, Tag* t);
+
 extern void shackRadio240Pwr1SwitchUpdate(int x, Tag* t);
 extern void shackRadio240Pwr2SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr1SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr2SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr3SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr4SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr5SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr6SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr7SwitchUpdate(int x, Tag* t);
-extern void shackRadio12Pwr8SwitchUpdate(int x, Tag* t);
+extern void shackRadio12PwrSwitchUpdate(int x, Tag* t);
 
 // Proto types
 void subscribe_tags(void);
@@ -194,16 +188,23 @@ void init_values(void)
 
 /*
  * Initialise bool tag
+ * intializes the tag to subscribe/publish to mqtt broker
+ * assigns callback function
+ *
+ * topic: MQTT topic name
+ * updateCallback: callback function called on value update from MQTT
+ * ID: int value to identify tag (e.g. index if tag is part of an array)
+ * publish: true if this value is published
  */
-Tag* init_bool_tag( const char* topic, void (*updateCallback) (int,Tag*), bool publish = true ) {
+Tag* init_bool_tag( const char* topic, void (*updateCallback) (int,Tag*), int ID = 0, bool publish = true ) {
     Tag* tp = ts.addTag( topic );
     tp->setSubscribe();
     tp->setType(TAG_TYPE_BOOL);
-    tp->registerUpdateCallback(updateCallback, 0);
+    tp->registerUpdateCallback(updateCallback, ID);
 	if (publish) {
         tp->setPublish();
 		tp->setRetain(true);    // needs to be retained during broker reboot
-    	tp->registerPublishCallback(&mqtt_publish_tag, 0);
+    	tp->registerPublishCallback(&mqtt_publish_tag, ID);
     }
     return tp;
 }
@@ -299,14 +300,14 @@ void init_tags(void)
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
 	// Shack Radio 12V Power 1 - 8
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[0], &shackRadio12Pwr1SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[1], &shackRadio12Pwr2SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[2], &shackRadio12Pwr3SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[3], &shackRadio12Pwr4SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[4], &shackRadio12Pwr5SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[5], &shackRadio12Pwr6SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[6], &shackRadio12Pwr7SwitchUpdate);
-    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[7], &shackRadio12Pwr8SwitchUpdate);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[0], &shackRadio12PwrSwitchUpdate, 0);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[1], &shackRadio12PwrSwitchUpdate, 1);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[2], &shackRadio12PwrSwitchUpdate, 2);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[3], &shackRadio12PwrSwitchUpdate, 3);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[4], &shackRadio12PwrSwitchUpdate, 4);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[5], &shackRadio12PwrSwitchUpdate, 5);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[6], &shackRadio12PwrSwitchUpdate, 6);
+    init_bool_tag((const char*) Topic_Shack_Radio12_Pwr[7], &shackRadio12PwrSwitchUpdate, 7);
 
 }
 

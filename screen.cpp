@@ -507,10 +507,10 @@ void radio_create(lv_obj_t *parent) {
 	create_shack_radio12pwr(1, "IC-9700", shack_radio12V_container1, parent, shack_radio12pwr_switch[0], LV_ALIGN_OUT_BOTTOM_MID);
 	create_shack_radio12pwr(2, "IC-5100", shack_radio12V_container1, parent, shack_radio12pwr_switch[1], LV_ALIGN_OUT_BOTTOM_MID);
 	create_shack_radio12pwr(3, "Power 4", shack_radio12V_container1, parent, shack_radio12pwr_switch[2], LV_ALIGN_OUT_BOTTOM_MID);
-	create_shack_radio12pwr(4, "Power 5", shack_radio12V_container2, parent, shack_radio12V_container2, LV_ALIGN_IN_TOP_MID);
+	create_shack_radio12pwr(4, "IC7300 Acc", shack_radio12V_container2, parent, shack_radio12V_container2, LV_ALIGN_IN_TOP_MID);
 	create_shack_radio12pwr(5, "Power 6", shack_radio12V_container2, parent, shack_radio12pwr_switch[4], LV_ALIGN_OUT_BOTTOM_MID);
 	create_shack_radio12pwr(6, "Power 7", shack_radio12V_container2, parent, shack_radio12pwr_switch[5], LV_ALIGN_OUT_BOTTOM_MID);
-	create_shack_radio12pwr(7, "Power 8", shack_radio12V_container2, parent, shack_radio12pwr_switch[6], LV_ALIGN_OUT_BOTTOM_MID);
+	create_shack_radio12pwr(7, "LED Strip", shack_radio12V_container2, parent, shack_radio12pwr_switch[6], LV_ALIGN_OUT_BOTTOM_MID);
 
 }
 

@@ -549,16 +549,16 @@ void temps_create(lv_obj_t *parent) {
 */
 
     // Screen Room Temperature
-    lv_obj_t *obj = lv_obj_create(temps1_container, NULL);
+/*    lv_obj_t *obj = lv_obj_create(temps1_container, NULL);
     lv_obj_set_size(obj, 150, 40);
     //lv_obj_set_style(obj0, &lv_style_plain_color);
     //lv_obj_align(obj0, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 10);
     lv_roomTemp[0] = lv_label_create(obj, NULL);
     lv_label_set_text(lv_roomTemp[0], roomTempFormat[0]);
     lv_obj_align(lv_roomTemp[0], NULL, LV_ALIGN_CENTER, 0, 0);
-
+*/
     // Shack Temperature
-    obj = lv_obj_create(temps1_container, NULL);
+    lv_obj_t *obj = lv_obj_create(temps1_container, NULL);
     lv_obj_set_size(obj, 150, 40);
     //lv_obj_set_style(obj1, &lv_style_plain_color);
     //lv_obj_align(obj1, NULL, LV_ALIGN_IN_TOP_LEFT, 10, 70);

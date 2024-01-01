@@ -30,7 +30,7 @@
 #include "hardware.h"
 #include "screen.h"
 #include "datatag.h"
-#include "mcp9808.h"
+//#include "mcp9808.h"
 
 #define VAR_PROCESS_INTERVAL 15      // seconds
 
@@ -68,7 +68,7 @@ void mqtt_publish_tag(int x, Tag* t);
 Hardware hw;
 TagStore ts;
 MQTT mqtt;
-Mcp9808 envTempSensor;    // Environment temperature sensor at rear of screen
+//Mcp9808 envTempSensor;    // Environment temperature sensor at rear of screen
 
 /*
  * Handle system signals
@@ -144,7 +144,7 @@ void var_process(void) {
             //printf("%s - %s %.1f\n", __func__, tag->getTopic(), tag->floatValue());
             cpuTempUpdate(0, tag);      // update on screen
         }
-
+/*
         // update environment temperature
         float fValue;
         tag = ts.getTag((const char*) TOPIC_ENV_TEMP);
@@ -157,6 +157,7 @@ void var_process(void) {
                 syslog(LOG_ERR, "Failed to read Mcp9808 temp sensor");
             }
         }
+*/
     }
 
     // reconnect mqtt if required
@@ -222,12 +223,12 @@ void init_tags(void)
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
 
     // Environment temperature is stored in index 0
-    tp = ts.addTag((char*) TOPIC_ENV_TEMP);
+/*    tp = ts.addTag((char*) TOPIC_ENV_TEMP);
     tp->setPublish();
     tp->setFormat("%.1f");
     tp->registerUpdateCallback(&roomTempUpdate, 0);   // update screen
     tp->registerPublishCallback(&mqtt_publish_tag, 0);
-
+*/
     // Shack Temp is stored in index 1
     tp = ts.addTag((const char*) TOPIC_SHACK_ROOM_TEMP);
     tp->setSubscribe();

@@ -27,7 +27,7 @@ CFLAGS += -I$(LVGL_DIR)
 #LIBRARIES
 include $(LVGL_DIR)/lvgl.mk
 include $(LVGL_DIR)/lv_drivers/lv_drivers.mk
-include mcp9808/mcp9808.mk
+#include mcp9808/mcp9808.mk
 
 # folder for our object files
 OBJDIR = ./obj

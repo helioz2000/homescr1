@@ -12,7 +12,7 @@
 
 
 #define TOPIC_CPU_TEMP "binder/home/screen1pi/cpu/temp"
-#define TOPIC_ENV_TEMP "binder/home/screen1/env/temp"
+//#define TOPIC_ENV_TEMP "binder/home/screen1/env/temp"
 #define TOPIC_BED1_ROOM_TEMP "binder/home/bed1/room/temp"
 #define TOPIC_BALCONY_TEMP "binder/home/balcony/temp"
 #define TOPIC_BALCONY_HUMIDITY "binder/home/balcony/humidity"
